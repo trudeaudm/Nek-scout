@@ -10,9 +10,13 @@ services:
     name: nek-scout
     runtime: node
     plan: free
-    buildCommand: npm install && npx prisma generate && npm run build
+    # NODE_ENV=production is set below, which makes plain `npm install` skip
+    # devDependencies. Next.js needs those (typescript, types) to build.
+    buildCommand: npm install --include=dev && npx prisma generate && npm run build
     startCommand: bash scripts/start.sh
     envVars:
+      - key: NODE_VERSION
+        value: "22"
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
