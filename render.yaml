@@ -3,7 +3,7 @@ services:
     name: nek-scout
     runtime: node
     plan: free
-    buildCommand: ./scripts/render-build.sh
+    buildCommand: npm install && npm run build
     startCommand: ./scripts/start.sh
     envVars:
       - key: NODE_ENV
