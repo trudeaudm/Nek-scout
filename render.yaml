@@ -3,7 +3,7 @@ services:
     name: nek-scout
     runtime: node
     plan: free
-    buildCommand: npm install && npm run build && npm run seed
+    buildCommand: npm install && DATABASE_URL="file:./prisma/dev.db" npm run build && DATABASE_URL="file:./prisma/dev.db" npm run seed
     startCommand: npm start
     envVars:
       - key: NODE_ENV
