@@ -29,6 +29,25 @@ interface PropertyCardProps {
   property: any
 }
 
+function tenureLabel(transfer?: {
+  ownershipYears?: number | null
+  transferType?: string | null
+}) {
+  if (transfer?.ownershipYears == null) {
+    return 'No deed transfer since 2019'
+  }
+
+  const years = transfer.ownershipYears
+  const length =
+    years < 1 ? 'Under 1 year' : `${years} year${years === 1 ? '' : 's'}`
+
+  if (transfer.transferType === 'After grand list') {
+    return `${length}, after Grand List`
+  }
+
+  return length
+}
+
 export function PropertyCard({ property }: PropertyCardProps) {
   const [showDetails, setShowDetails] = useState(false)
   const [showMap, setShowMap] = useState(false)
@@ -113,9 +132,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <div>
               <div className="text-[11px] tracking-wide text-[#7a8a82] uppercase">Tenure</div>
               <div className="mt-0.5 text-base text-[#1c3330]">
-                {property.transfer?.ownershipYears
-                  ? `${property.transfer.ownershipYears} years`
-                  : 'Unknown'}
+                {tenureLabel(property.transfer)}
               </div>
             </div>
             <div>

@@ -22,6 +22,7 @@ interface ImportedProperty {
   // Transfer data
   lastSaleDate?: string
   lastSalePrice?: number
+  transferType?: string
 
   // Constraint data
   floodplain?: boolean
@@ -166,12 +167,13 @@ async function importProperties(
               lastSaleDate: new Date(property.lastSaleDate),
               lastSalePrice: property.lastSalePrice,
               ownershipYears: calculateOwnershipYears(property.lastSaleDate),
-              transferType: 'Warranty Deed',
+              transferType: property.transferType || 'Deed',
             },
             update: {
               lastSaleDate: new Date(property.lastSaleDate),
               lastSalePrice: property.lastSalePrice,
               ownershipYears: calculateOwnershipYears(property.lastSaleDate),
+              transferType: property.transferType || 'Deed',
             },
           })
         }
@@ -237,7 +239,7 @@ async function importProperties(
               lastSaleDate: new Date(property.lastSaleDate),
               lastSalePrice: property.lastSalePrice,
               ownershipYears: calculateOwnershipYears(property.lastSaleDate),
-              transferType: 'Warranty Deed',
+              transferType: property.transferType || 'Deed',
             },
           })
         }

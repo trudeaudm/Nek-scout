@@ -35,7 +35,11 @@ const OUT_FIELDS = [
   'UVREDUC_HS',
   'UVREDUC_NR',
   'RESCODE',
+  'GLYEAR',
 ].join(',')
+
+const TRANSFER_SERVER_URL =
+  'https://services1.arcgis.com/BkFxaEFNwHqX3tAw/ArcGIS/rest/services/FS_VCGI_OPENDATA_Cadastral_PTTR_point_WM_v1_view/FeatureServer/0'
 
 /** Towns in Caledonia, Orleans, and Essex counties (Grand List TNAME values). */
 export const NEK_TOWNS: Record<string, string[]> = {
@@ -203,9 +207,85 @@ async function queryCount(where: string): Promise<number> {
   return response.data.count || 0
 }
 
+interface LatestTransfer {
+  closeMs: number
+  price?: number
+}
+
+function normalizeSpan(value: string): string {
+  return value.replace(/\D/g, '')
+}
+
+function selectedTowns(options: VcgiImportOptions): string[] {
+  return options.towns && options.towns.length > 0
+    ? options.towns
+    : Object.values(NEK_TOWNS).flat()
+}
+
+/** Latest deed per SPAN from the statewide property-transfer layer (January 2019 onward). */
+async function fetchLatestTransfers(
+  towns: string[]
+): Promise<Map<string, LatestTransfer>> {
+  const latest = new Map<string, LatestTransfer>()
+  const where = `TOWNNAME IN (${towns
+    .map((town) => `'${escapeSqlString(town)}'`)
+    .join(',')}) AND closeDate IS NOT NULL`
+  const pageSize = 1000
+  let offset = 0
+
+  console.log('Querying property transfers since 2019...')
+
+  while (true) {
+    const response = await axios.get(`${TRANSFER_SERVER_URL}/query`, {
+      params: {
+        where,
+        outFields: 'span,closeDate,RlPrVlPdTr,ValPdOrTrn',
+        returnGeometry: false,
+        resultOffset: offset,
+        resultRecordCount: pageSize,
+        orderByFields: 'OBJECTID ASC',
+        f: 'json',
+      },
+      timeout: 120000,
+    })
+
+    if (response.data.error) {
+      throw new Error(
+        `Transfer query failed: ${JSON.stringify(response.data.error)}`
+      )
+    }
+
+    const features: ArcGisFeature[] = response.data.features || []
+    if (features.length === 0) break
+
+    for (const feature of features) {
+      const attributes = feature.attributes
+      const span = normalizeSpan(String(attributes.span || ''))
+      const closeMs = Number(attributes.closeDate)
+      if (!span || !closeMs) continue
+
+      const realPrice = Number(attributes.RlPrVlPdTr)
+      const paidPrice = Number(attributes.ValPdOrTrn)
+      const price = realPrice > 0 ? realPrice : paidPrice > 0 ? paidPrice : undefined
+      const existing = latest.get(span)
+      if (!existing || closeMs > existing.closeMs) {
+        latest.set(span, { closeMs, price })
+      }
+    }
+
+    offset += features.length
+    console.log(`Fetched ${offset} transfer records...`)
+    if (features.length < pageSize) break
+  }
+
+  console.log(`Latest transfers indexed for ${latest.size} parcels.`)
+  return latest
+}
+
 function mapFeature(
   feature: ArcGisFeature,
-  countyLookup: Map<string, string>
+  countyLookup: Map<string, string>,
+  transfers: Map<string, LatestTransfer>
 ): ImportedProperty | null {
   const a = feature.attributes
   const parcelId = String(a.GLIST_SPAN || a.SPAN || '').trim()
@@ -241,6 +321,23 @@ function mapFeature(
   const latitude =
     centroid && typeof centroid.y === 'number' ? centroid.y : undefined
 
+  const transfer = transfers.get(normalizeSpan(parcelId))
+  let lastSaleDate: string | undefined
+  let lastSalePrice: number | undefined
+  let transferType: string | undefined
+  if (transfer) {
+    lastSaleDate = new Date(transfer.closeMs).toISOString()
+    lastSalePrice = transfer.price
+    const grandListYear = Number(a.GLYEAR)
+    const grandListAsOf = grandListYear
+      ? Date.UTC(grandListYear, 3, 1)
+      : undefined
+    transferType =
+      grandListAsOf && transfer.closeMs > grandListAsOf
+        ? 'After grand list'
+        : 'Deed'
+  }
+
   return {
     parcelId,
     town,
@@ -257,6 +354,9 @@ function mapFeature(
     currentUse,
     latitude,
     longitude,
+    lastSaleDate,
+    lastSalePrice,
+    transferType,
   }
 }
 
@@ -267,6 +367,15 @@ export async function fetchNekParcels(
   const countyLookup = townCountyMap()
   const pageSize = 1000
   const limit = options.limit
+  let transfers = new Map<string, LatestTransfer>()
+  try {
+    transfers = await fetchLatestTransfers(selectedTowns(options))
+  } catch (error) {
+    console.error(
+      'Property transfer lookup failed; tenure will stay blank for this import.',
+      error
+    )
+  }
 
   console.log(`Querying VCGI FeatureServer...`)
   console.log(`WHERE: ${where}`)
@@ -289,7 +398,7 @@ export async function fetchNekParcels(
     }
 
     for (const feature of features) {
-      const mapped = mapFeature(feature, countyLookup)
+      const mapped = mapFeature(feature, countyLookup, transfers)
       if (mapped) {
         properties.push(mapped)
       }

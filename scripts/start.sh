@@ -25,18 +25,34 @@ prisma.parcel.count()
   .catch(async (e) => { console.error(e); await prisma.\$disconnect(); process.exit(1); });
 " 2>/dev/null)
 
+    IMPORT_ARGS="--min-acres=${IMPORT_MIN_ACRES:-5}"
+    if [ "${IMPORT_OOS_ONLY}" = "true" ]; then
+      IMPORT_ARGS="${IMPORT_ARGS} --oos"
+    fi
+
     if [ "${PARCEL_COUNT}" = "0" ]; then
       echo "Database empty — background import of NEK parcels from VCGI starting..."
-      IMPORT_ARGS="--min-acres=${IMPORT_MIN_ACRES:-5}"
-      if [ "${IMPORT_OOS_ONLY}" = "true" ]; then
-        IMPORT_ARGS="${IMPORT_ARGS} --oos"
-      fi
       npx tsx scripts/import-vcgi.ts ${IMPORT_ARGS} \
         >> /tmp/nek-scout-boot-import.log 2>&1 \
         && echo "Background import finished successfully." \
         || echo "Background import failed. Check /tmp/nek-scout-boot-import.log or run: npm run import:vcgi"
     else
-      echo "Skipping boot import; parcel count is ${PARCEL_COUNT}."
+      TRANSFER_COUNT=$(node -e "
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+prisma.transfer.count()
+  .then((c) => { console.log(c); return prisma.\$disconnect(); })
+  .catch(async (e) => { console.error(e); await prisma.\$disconnect(); process.exit(1); });
+" 2>/dev/null)
+      if [ "${TRANSFER_COUNT}" = "0" ]; then
+        echo "Parcels exist without deed dates — background transfer backfill starting..."
+        npx tsx scripts/import-vcgi.ts --upsert ${IMPORT_ARGS} \
+          >> /tmp/nek-scout-boot-import.log 2>&1 \
+          && echo "Transfer backfill finished successfully." \
+          || echo "Transfer backfill failed. Check /tmp/nek-scout-boot-import.log or run: npm run import:vcgi -- --upsert"
+      else
+        echo "Skipping boot import; parcel count is ${PARCEL_COUNT}, transfer count is ${TRANSFER_COUNT}."
+      fi
     fi
   ) &
 fi
