@@ -1,0 +1,7 @@
+{
+  "updateFrequency": "daily",
+  "autoImport": true,
+  "minAcres": 5,
+  "outOfStateOnly": false,
+  "lastUpdate": null
+}

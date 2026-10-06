@@ -69,7 +69,7 @@ Add one of these lines:
 
 **Weekly (Sundays at 2am):**
 ```bash
-0 2 * * 0 cd /path/to/nek-scout && tsx scripts/auto-update.ts >> data/cron.log 2>&1
+0 2 * * * cd /path/to/nek-scout && tsx scripts/auto-update.ts >> data/cron.log 2>&1
 ```
 
 **Monthly (1st of month at 2am):**
@@ -92,7 +92,7 @@ If hosting on Render:
    - **Name**: nek-scout-data-update
    - **Environment**: Node
    - **Build Command**: `npm install`
-   - **Schedule**: `0 2 * * 0` (every Sunday at 2am)
+   - **Schedule**: `0 2 * * *` (every day at 2am)
    - **Command**: `tsx scripts/auto-update.ts`
    - **Branch**: main
 
@@ -107,7 +107,7 @@ name: Update Vermont Property Data
 
 on:
   schedule:
-    - cron: '0 2 * * 0'  # Every Sunday at 2am UTC
+    - cron: '0 2 * * *'  # Every day at 2am UTC
   workflow_dispatch:  # Allow manual trigger
 
 jobs:

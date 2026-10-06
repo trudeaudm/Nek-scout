@@ -2,6 +2,26 @@
 
 This guide explains how to obtain and import real Vermont property data into the NEK Scout system.
 
+## Automated Import (Recommended)
+
+NEK Scout can pull real Grand List–joined parcel data from VCGI's public ArcGIS FeatureServer.
+
+```bash
+# Import NEK parcels >= 5 acres
+npm run import:vcgi
+
+# Out-of-state owners only
+npm run import:vcgi -- --oos --min-acres=5
+
+# Smoke test
+npm run import:vcgi -- --limit=50
+
+# Scheduled updater (used by Render cron)
+npm run auto-update
+```
+
+On Render, the first web boot runs migrations and starts a **background** VCGI import when the database is empty (`scripts/start.sh`), so health checks are not blocked. You can also trigger `npm run import:vcgi` or `npm run auto-update` from the Render Shell / cron job.
+
 ## Data Sources
 
 ### 1. Vermont Grand List Data

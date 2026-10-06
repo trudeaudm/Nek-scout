@@ -39,6 +39,9 @@ yarn-error.log*
 /data/*.xls
 /data/*.json
 !/data/README.md
+!/data/update-config.json
+/data/automated/
+/data/update-log.json
 
 # vercel
 .vercel

@@ -64,7 +64,7 @@
   name: nek-scout-updater
   runtime: node
   plan: free
-  schedule: "0 2 * * 0"
+  schedule: "0 2 * * *"
   buildCommand: npm install
   startCommand: npm run auto-update
   envVars:
@@ -91,7 +91,7 @@ name: Update Vermont Property Data
 
 on:
   schedule:
-    - cron: '0 2 * * 0'  # Every Sunday at 2am UTC
+    - cron: '0 2 * * *'  # Every day at 2am UTC
   workflow_dispatch:  # Manual trigger button
 
 jobs:
@@ -181,7 +181,7 @@ services:
     name: nek-scout-updater
     runtime: node
     plan: free
-    schedule: "0 2 * * 0"
+    schedule: "0 2 * * *"
     buildCommand: npm install
     startCommand: npm run auto-update
     envVars:

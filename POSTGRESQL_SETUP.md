@@ -35,7 +35,7 @@ Your app has been migrated to PostgreSQL! Follow these steps to deploy with full
 That's it! Render will:
 - Create PostgreSQL database
 - Deploy web app
-- Set up weekly cron job
+- Set up daily cron job
 - Connect everything automatically
 
 ### Option 2: Manual Setup
@@ -149,7 +149,7 @@ Go to Render → nek-scout-updater:
 ## Automated Updates
 
 The cron job will now:
-- ✅ Run every Sunday at 2am UTC
+- ✅ Run every day at 2am UTC
 - ✅ Check for new Vermont property data
 - ✅ Download automatically
 - ✅ Import into shared PostgreSQL database
@@ -216,3 +216,17 @@ npm run auto-update
 5. ✅ Monitor first automated update
 
 Your app is now production-ready with full automation! 🚀
+
+
+## Initial Data Import
+
+On first boot, `scripts/start.sh` runs migrations and, if the database is empty, imports NEK parcels (>=5 acres) from the VCGI ArcGIS FeatureServer.
+
+Manual import (Render Shell or local with DATABASE_URL):
+
+```bash
+npm run import:vcgi
+npm run import:vcgi -- --oos --min-acres=5
+npm run import:vcgi -- --limit=100
+FORCE_UPDATE=true npm run auto-update
+```
