@@ -211,7 +211,8 @@ function extractState(address: string): string | null {
 }
 
 // Export functions for use in other scripts
-export { importProperties, ImportedProperty }
+export { importProperties }
+export type { ImportedProperty }
 
 // If run directly
 if (require.main === module) {

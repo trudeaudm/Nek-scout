@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client'
-import { importProperties, ImportedProperty } from './import-data'
+import { importProperties } from './import-data'
+import type { ImportedProperty } from './import-data'
 import * as fs from 'fs'
 import * as path from 'path'
 
