@@ -89,6 +89,18 @@ async function main() {
     })
   ])
 
+  // Helper function to generate random data within realistic ranges
+  const randomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min
+  const randomFloat = (min: number, max: number) => Math.random() * (max - min) + min
+
+  const towns = {
+    Caledonia: ['St. Johnsbury', 'Lyndon', 'Burke', 'Danville', 'Hardwick', 'Barnet', 'Peacham'],
+    Orleans: ['Newport', 'Derby', 'Barton', 'Irasburg', 'Glover', 'Brownington', 'Coventry'],
+    Essex: ['Guildhall', 'Concord', 'Lunenburg', 'Maidstone', 'Brunswick', 'Bloomfield']
+  }
+
+  const propertyClasses = ['Residential', 'Agricultural', 'Forest Land', '2 unit', '3 unit', 'Commercial', 'Seasonal']
+  
   const parcels = [
     {
       parcelId: 'CAL-001-2024',
@@ -340,7 +352,58 @@ async function main() {
     }
   ]
 
-  for (const parcelData of parcels) {
+  // Generate additional properties for more realistic data
+  const additionalParcels = []
+  
+  for (let i = 0; i < 32; i++) {
+    const county = ['Caledonia', 'Orleans', 'Essex'][randomInt(0, 2)]
+    const townList = towns[county as keyof typeof towns]
+    const town = townList[randomInt(0, townList.length - 1)]
+    const ownerIndex = randomInt(0, owners.length - 1)
+    const ownershipYears = randomInt(5, 50)
+    const acreage = randomFloat(0.5, 200)
+    const propertyClass = propertyClasses[randomInt(0, propertyClasses.length - 1)]
+    const yearBuilt = propertyClass !== 'Forest Land' ? randomInt(1920, 2020) : null
+    
+    const landValue = acreage * randomInt(1000, 5000)
+    const buildingValue = yearBuilt ? randomInt(20000, 300000) : randomInt(0, 50000)
+    
+    additionalParcels.push({
+      parcelId: `${county.substring(0, 3).toUpperCase()}-${String(i + 300).padStart(3, '0')}-2024`,
+      town,
+      county,
+      address: `${randomInt(100, 9999)} ${['Main', 'Mountain', 'Lake', 'Valley', 'Brook', 'Ridge'][randomInt(0, 5)]} ${['Road', 'Street', 'Drive', 'Lane'][randomInt(0, 3)]}`,
+      acreage,
+      landValue,
+      buildingValue,
+      totalAssessedValue: landValue + buildingValue,
+      yearBuilt,
+      propertyClass,
+      zoning: acreage > 10 ? 'Rural' : 'Village Residential',
+      latitude: 44.4 + randomFloat(0, 0.6),
+      longitude: -72.2 + randomFloat(0, 0.5),
+      ownerId: owners[ownerIndex].id,
+      transfer: {
+        lastSaleDate: new Date(2023 - ownershipYears, randomInt(0, 11), randomInt(1, 28)),
+        lastSalePrice: (landValue + buildingValue) * randomFloat(0.6, 1.2),
+        ownershipYears,
+        transferType: 'Warranty Deed'
+      },
+      constraints: {
+        floodplain: randomInt(1, 100) < 15,
+        wetlands: randomInt(1, 100) < 25,
+        riverCorridor: randomInt(1, 100) < 10,
+        currentUse: acreage > 25 && randomInt(1, 100) < 40,
+        conservedLand: randomInt(1, 100) < 5,
+        steepSlope: randomInt(1, 100) < 20,
+        accessFrontageFlags: ['Road frontage confirmed', 'Private road access', 'State highway frontage'][randomInt(0, 2)]
+      }
+    })
+  }
+
+  const allParcels = [...parcels, ...additionalParcels]
+
+  for (const parcelData of allParcels) {
     const { transfer, constraints, ownerId, ...parcelFields } = parcelData
 
     const parcel = await prisma.parcel.create({
@@ -392,7 +455,7 @@ async function main() {
     console.log(`Created parcel: ${parcel.parcelId}`)
   }
 
-  console.log('Seed completed successfully!')
+  console.log(`Seed completed successfully! Created ${allParcels.length} properties.`)
 }
 
 main()
