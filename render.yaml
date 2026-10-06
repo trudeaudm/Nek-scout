@@ -25,7 +25,6 @@ services:
   - type: cron
     name: nek-scout-updater
     runtime: node
-    plan: free
     schedule: "0 2 * * 0"
     buildCommand: npm install && npx prisma generate
     startCommand: npm run auto-update
