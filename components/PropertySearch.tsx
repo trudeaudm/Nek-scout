@@ -68,7 +68,7 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
             <Select
               value={filters.county || undefined}
               onValueChange={(value) =>
-                setFilters({ ...filters, county: value === 'all' ? '' : value })
+                setFilters({ ...filters, county: value === 'all' ? '' : (value || '') })
               }
             >
               <SelectTrigger>
@@ -116,7 +116,7 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
             <Select
               value={filters.outOfState || undefined}
               onValueChange={(value) =>
-                setFilters({ ...filters, outOfState: value === 'all' ? '' : value })
+                setFilters({ ...filters, outOfState: value === 'all' ? '' : (value || '') })
               }
             >
               <SelectTrigger>
@@ -137,7 +137,7 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
             <Select
               value={filters.ownershipYears || undefined}
               onValueChange={(value) =>
-                setFilters({ ...filters, ownershipYears: value === 'all' ? '' : value })
+                setFilters({ ...filters, ownershipYears: value === "all" ? "" : (value || "") })
               }
             >
               <SelectTrigger>
@@ -159,7 +159,7 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
             <Select
               value={filters.ownerType || undefined}
               onValueChange={(value) =>
-                setFilters({ ...filters, ownerType: value === 'all' ? '' : value })
+                setFilters({ ...filters, ownerType: value === "all" ? "" : (value || "") })
               }
             >
               <SelectTrigger>
@@ -211,7 +211,7 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
             <Select
               value={filters.excludeFloodplain || undefined}
               onValueChange={(value) =>
-                setFilters({ ...filters, excludeFloodplain: value === 'all' ? '' : value })
+                setFilters({ ...filters, excludeFloodplain: value === "all" ? "" : (value || "") })
               }
             >
               <SelectTrigger>
@@ -231,7 +231,7 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
             <Select
               value={filters.excludeWetlands || undefined}
               onValueChange={(value) =>
-                setFilters({ ...filters, excludeWetlands: value === 'all' ? '' : value })
+                setFilters({ ...filters, excludeWetlands: value === "all" ? "" : (value || "") })
               }
             >
               <SelectTrigger>
