@@ -4,7 +4,7 @@ services:
     runtime: node
     plan: free
     buildCommand: ./scripts/render-build.sh
-    startCommand: npm start
+    startCommand: ./scripts/start.sh
     envVars:
       - key: NODE_ENV
         value: production
