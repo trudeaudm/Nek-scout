@@ -9,6 +9,8 @@
     "lint": "eslint",
     "import": "tsx scripts/import-csv.ts",
     "import:vcgi": "tsx scripts/import-vcgi.ts",
+    "enrich": "tsx scripts/enrich-constraints.ts",
+    "import:listings": "tsx scripts/import-listings.ts",
     "fetch-data": "tsx scripts/fetch-vermont-data.ts",
     "auto-update": "tsx scripts/auto-update.ts"
   },
@@ -24,6 +26,7 @@
     "lucide-react": "^1.52.0",
     "next": "16.3.8",
     "prisma": "5.22.0",
+    "proj4": "^2.22.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "react-leaflet": "^5.0.0",

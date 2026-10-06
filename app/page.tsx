@@ -1,13 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import { Compass, ShieldCheck, Trees, TrendingUp } from 'lucide-react'
+import { Bookmark, Compass, ShieldCheck, Trees, TrendingUp } from 'lucide-react'
 import { PropertySearch } from '@/components/PropertySearch'
 import { PropertyList } from '@/components/PropertyList'
+import { SavedPropertiesProvider, useSavedProperties } from '@/components/SavedProperties'
 
 export default function Home() {
+  return (
+    <SavedPropertiesProvider>
+      <HomePage />
+    </SavedPropertiesProvider>
+  )
+}
+
+function HomePage() {
   const [searchParams, setSearchParams] = useState({})
   const [refreshKey, setRefreshKey] = useState(0)
+  const [view, setView] = useState<'browse' | 'saved'>('browse')
+  const saved = useSavedProperties()
 
   const handleSearch = (params: any) => {
     setSearchParams(params)
@@ -63,13 +74,45 @@ export default function Home() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
-          <aside className="lg:col-span-1">
-            <PropertySearch onSearch={handleSearch} />
-          </aside>
+        <div className="mb-6 flex gap-2">
+          <button
+            type="button"
+            onClick={() => setView('browse')}
+            className={`rounded-md px-4 py-2 text-sm ${
+              view === 'browse'
+                ? 'bg-[#1c3330] text-white'
+                : 'border border-[#c9d5c8] bg-[#fbfcfa] text-[#1c3330]'
+            }`}
+          >
+            Browse
+          </button>
+          <button
+            type="button"
+            onClick={() => setView('saved')}
+            className={`inline-flex items-center gap-2 rounded-md px-4 py-2 text-sm ${
+              view === 'saved'
+                ? 'bg-[#1c3330] text-white'
+                : 'border border-[#c9d5c8] bg-[#fbfcfa] text-[#1c3330]'
+            }`}
+          >
+            <Bookmark className="size-3.5" strokeWidth={1.75} />
+            Saved ({saved.ids.length})
+          </button>
+        </div>
 
-          <div className="lg:col-span-3">
-            <PropertyList searchParams={searchParams} key={refreshKey} />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-4">
+          {view === 'browse' && (
+            <aside className="lg:col-span-1">
+              <PropertySearch onSearch={handleSearch} />
+            </aside>
+          )}
+
+          <div className={view === 'browse' ? 'lg:col-span-3' : 'lg:col-span-4'}>
+            {view === 'browse' ? (
+              <PropertyList searchParams={searchParams} key={refreshKey} />
+            ) : (
+              <PropertyList mode="saved" searchParams={{}} savedIds={saved.ids} />
+            )}
           </div>
         </div>
       </main>
@@ -78,7 +121,7 @@ export default function Home() {
         <div className="container mx-auto max-w-3xl px-4 py-10 text-center text-sm leading-relaxed">
           <h2 className="font-display text-xl text-white">Before you rely on a record</h2>
           <p className="mt-4">
-            Figures come from the Vermont Grand List (2025), GIS parcels, and transfer records back to 1986.
+            Figures come from the Vermont Grand List, GIS parcels, deed transfers since 2019, and public flood and wetland maps.
           </p>
           <p className="mt-2">
             This is informational. Scores describe public records and do not mean an owner wants to sell, or that a parcel is suitable.

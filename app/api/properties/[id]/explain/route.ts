@@ -26,6 +26,12 @@ function generateExplanation(property: any): string {
     factors.push('trust ownership')
   }
 
+  if (property.lifeEstate) {
+    factors.push(
+      'a life estate, which often comes up for sale when the remainder passes to heirs'
+    )
+  }
+
   if (property.acreage && property.acreage >= 10) {
     factors.push(`substantial acreage (${property.acreage.toFixed(1)} acres)`)
   }
@@ -40,7 +46,7 @@ function generateExplanation(property: any): string {
 
   if (constraints?.currentUse) {
     risks.push(
-      'Current Use enrollment - review tax implications and withdrawal requirements'
+      'Current Use enrollment makes development more expensive because leaving the program triggers a land-use change tax'
     )
   }
 

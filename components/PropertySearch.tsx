@@ -27,6 +27,10 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
     ownerType: '',
     minDevelopmentScore: '',
     minRentalScore: '',
+    minPrice: '',
+    maxPrice: '',
+    lifeEstate: '',
+    listed: '',
     excludeFloodplain: '',
     excludeWetlands: '',
     includeCurrentUse: ''
@@ -50,6 +54,10 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
       ownerType: '',
       minDevelopmentScore: '',
       minRentalScore: '',
+      minPrice: '',
+      maxPrice: '',
+      lifeEstate: '',
+      listed: '',
       excludeFloodplain: '',
       excludeWetlands: '',
       includeCurrentUse: ''
@@ -186,6 +194,107 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
             </Select>
           </div>
 
+          <div>
+            <label className="block text-sm font-medium mb-2 text-[#1c3330]">
+              Appraisal
+            </label>
+            <p className="mb-2 text-xs text-[#5c6b63]">Grand List value, low to high</p>
+            <div className="grid grid-cols-2 gap-2">
+              <Input
+                type="number"
+                placeholder="Min"
+                value={filters.minPrice}
+                onChange={(e) =>
+                  setFilters({ ...filters, minPrice: e.target.value })
+                }
+              />
+              <Input
+                type="number"
+                placeholder="Max"
+                value={filters.maxPrice}
+                onChange={(e) =>
+                  setFilters({ ...filters, maxPrice: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2 text-[#1c3330]">
+              Life estate
+            </label>
+            <p className="mb-2 text-xs text-[#5c6b63]">
+              Owner name ends in LE, or the latest deed conveyed a life estate
+            </p>
+            <Select
+              value={filters.lifeEstate || undefined}
+              onValueChange={(value) =>
+                setFilters({ ...filters, lifeEstate: value === 'all' ? '' : (value || '') })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Any" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any</SelectItem>
+                <SelectItem value="true">Life estate</SelectItem>
+                <SelectItem value="false">Not a life estate</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2 text-[#1c3330]">
+              On the market
+            </label>
+            <p className="mb-2 text-xs text-[#5c6b63]">
+              Matched to a public for-sale ad. Unchecked parcels stay out of both lists.
+            </p>
+            <Select
+              value={filters.listed || undefined}
+              onValueChange={(value) =>
+                setFilters({ ...filters, listed: value === 'all' ? '' : (value || '') })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Any" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any</SelectItem>
+                <SelectItem value="true">Listed</SelectItem>
+                <SelectItem value="false">Not listed</SelectItem>
+                <SelectItem value="unknown">Not checked yet</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2 text-[#1c3330]">
+              Current use
+            </label>
+            <p className="mb-2 text-xs text-[#5c6b63]">
+              Enrolled land is more expensive to develop
+            </p>
+            <Select
+              value={filters.includeCurrentUse || undefined}
+              onValueChange={(value) =>
+                setFilters({
+                  ...filters,
+                  includeCurrentUse: value === 'all' ? '' : (value || ''),
+                })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Any" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any</SelectItem>
+                <SelectItem value="true">Current use only</SelectItem>
+                <SelectItem value="false">Exclude current use</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="border-t border-[#e4ebe3] pt-4">
             <p className="text-xs font-medium tracking-wide text-[#5c6b63] uppercase">Investment strategy</p>
           </div>
@@ -222,8 +331,9 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
 
           <div>
             <label className="block text-sm font-medium mb-2">
-              Exclude Floodplain
+              Exclude floodplain
             </label>
+            <p className="mb-2 text-xs text-[#5c6b63]">FEMA special flood hazard area</p>
             <Select
               value={filters.excludeFloodplain || undefined}
               onValueChange={(value) =>
@@ -242,8 +352,9 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
 
           <div>
             <label className="block text-sm font-medium mb-2">
-              Exclude Wetlands
+              Exclude wetlands
             </label>
+            <p className="mb-2 text-xs text-[#5c6b63]">Vermont Significant Wetland Inventory</p>
             <Select
               value={filters.excludeWetlands || undefined}
               onValueChange={(value) =>

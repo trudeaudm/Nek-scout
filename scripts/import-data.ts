@@ -23,6 +23,7 @@ interface ImportedProperty {
   lastSaleDate?: string
   lastSalePrice?: number
   transferType?: string
+  lifeEstate?: boolean
 
   // Constraint data
   floodplain?: boolean
@@ -156,6 +157,7 @@ async function importProperties(
             propertyClass: property.propertyClass,
             latitude: property.latitude,
             longitude: property.longitude,
+            lifeEstate: property.lifeEstate ?? false,
           },
         })
 
@@ -228,6 +230,7 @@ async function importProperties(
             propertyClass: property.propertyClass,
             latitude: property.latitude,
             longitude: property.longitude,
+            lifeEstate: property.lifeEstate ?? false,
             ownerId: owner.id,
           },
         })

@@ -4,11 +4,14 @@ import { useState } from 'react'
 import dynamic from 'next/dynamic'
 import {
   AlertTriangle,
+  Bookmark,
   ChevronDown,
   ChevronRight,
+  Mail,
   Map,
   TextSearch,
 } from 'lucide-react'
+import { useSavedProperties } from '@/components/SavedProperties'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -53,6 +56,8 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const [showMap, setShowMap] = useState(false)
   const [explanation, setExplanation] = useState<string | null>(null)
   const [loadingExplanation, setLoadingExplanation] = useState(false)
+  const saved = useSavedProperties()
+  const isSaved = saved.has(property.parcelId)
 
   const getScoreBadgeColor = (score: number) => {
     if (score >= 80) return 'bg-[#e5f0e6] text-[#1f4a32]'
@@ -151,6 +156,12 @@ export function PropertyCard({ property }: PropertyCardProps) {
               </div>
             </div>
             <div>
+              <div className="text-[11px] tracking-wide text-[#7a8a82] uppercase">Appraisal</div>
+              <div className="mt-0.5 text-base text-[#1c3330]">
+                {formatCurrency(property.totalAssessedValue)}
+              </div>
+            </div>
+            <div>
               <div className="text-[11px] tracking-wide text-[#7a8a82] uppercase">Best fit</div>
               <div className="mt-0.5 text-base text-[#1c3330]">
                 {bestStrategy.name}
@@ -187,6 +198,48 @@ export function PropertyCard({ property }: PropertyCardProps) {
                 Trust
               </Badge>
             )}
+            {property.lifeEstate && (
+              <Badge className="border-[#e4d0c4] bg-[#f8f1ec] font-normal text-[#6b3d2e]">
+                Life estate
+              </Badge>
+            )}
+            {property.listed && (
+              <Badge className="border-[#c9dccb] bg-[#eef5ef] font-normal text-[#24543a]">
+                On the market
+              </Badge>
+            )}
+        </div>
+
+        <div className="rounded-lg border border-[#e4ebe3] p-4">
+          <div className="text-[11px] tracking-wide text-[#7a8a82] uppercase">Contact</div>
+          <div className="mt-1 text-base text-[#1c3330]">
+            {property.owner?.ownerName || 'Owner name unavailable'}
+          </div>
+          <div className="mt-2 flex items-start gap-2 text-sm text-[#3e5348]">
+            <Mail className="mt-0.5 size-3.5 shrink-0 text-[#3e6b54]" strokeWidth={1.75} />
+            <div>
+              <div>Postal mail</div>
+              <div className="text-[#1c3330]">
+                {property.owner?.mailingAddress || 'No mailing address on the Grand List'}
+              </div>
+            </div>
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-[#5c6b63]">
+            The Grand List does not include a phone number or email.
+            {property.listed === true && ' This parcel matched a public for-sale ad.'}
+            {property.listed === false && ' No public for-sale ad matched this address.'}
+            {property.listed == null && ' Listing status has not been checked yet.'}
+          </p>
+          {property.listed && property.listingUrl && (
+            <a
+              href={property.listingUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-block text-sm text-[#2a5c63] underline"
+            >
+              Open listing{property.listingPrice ? ` · ${formatCurrency(property.listingPrice)}` : ''}
+            </a>
+          )}
         </div>
 
         {property.constraints && (property.constraints.currentUse || property.constraints.floodplain || 
@@ -199,7 +252,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <div className="flex flex-wrap gap-2">
               {property.constraints.currentUse && (
                 <Badge className="border-[#ead7b8] bg-[#f8f1e4] font-normal text-[#6a5424]">
-                  Current use
+                  Current use · costly to develop
                 </Badge>
               )}
               {property.constraints.floodplain && (
@@ -222,6 +275,15 @@ export function PropertyCard({ property }: PropertyCardProps) {
         )}
 
         <div className="flex gap-2 border-t border-[#e4ebe3] pt-4">
+          <Button
+            variant={isSaved ? "default" : "outline"}
+            size="sm"
+            onClick={() => saved.toggle(property.parcelId)}
+            className={isSaved ? "bg-[#1c3330] text-white hover:bg-[#2a4a42]" : "border-[#c9d5c8] text-[#1c3330]"}
+          >
+            <Bookmark className="size-3.5" strokeWidth={1.75} />
+            {isSaved ? 'Saved' : 'Save'}
+          </Button>
           <Button
             variant={showMap ? "default" : "outline"}
             size="sm"
@@ -287,7 +349,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
                 {formatCurrency(property.buildingValue)}
               </div>
               <div>
-                <span className="font-medium">Total Assessed:</span>{' '}
+                <span className="font-medium">Appraisal:</span>{' '}
                 {formatCurrency(property.totalAssessedValue)}
               </div>
               <div>
@@ -323,7 +385,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
                       {property.scores?.developmentScore || 0}/100
                     </span>
                   </div>
-                  <p className="text-xs text-slate-500 mt-1">Acreage, constraints, and subdivision possibilities</p>
+                  <p className="text-xs text-slate-500 mt-1">Acreage and location, reduced when current use, floodplain, or wetlands apply</p>
                 </div>
                 
                 <div className="pt-2 border-t border-slate-100">

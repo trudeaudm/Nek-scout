@@ -15,8 +15,13 @@ export async function GET(request: NextRequest) {
   const excludeFloodplain = searchParams.get('excludeFloodplain')
   const excludeWetlands = searchParams.get('excludeWetlands')
   const includeCurrentUse = searchParams.get('includeCurrentUse')
+  const minPrice = searchParams.get('minPrice')
+  const maxPrice = searchParams.get('maxPrice')
+  const lifeEstate = searchParams.get('lifeEstate')
+  const listed = searchParams.get('listed')
+  const parcelIds = searchParams.get('parcelIds')
   const sortBy = searchParams.get('sortBy') || 'overall'
-  const limit = parseInt(searchParams.get('limit') || '50')
+  const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 200)
   const offset = parseInt(searchParams.get('offset') || '0')
 
   try {
@@ -27,17 +32,41 @@ export async function GET(request: NextRequest) {
     }
 
     if (town) {
-      where.town = { contains: town }
+      where.town = { contains: town.trim(), mode: 'insensitive' }
     }
 
     if (minAcres) {
       where.acreage = { gte: parseFloat(minAcres) }
     }
 
+    const price: { gte?: number; lte?: number } = {}
+    if (minPrice) price.gte = parseFloat(minPrice)
+    if (maxPrice) price.lte = parseFloat(maxPrice)
+    if (price.gte != null || price.lte != null) {
+      where.totalAssessedValue = price
+    }
+
+    if (lifeEstate === 'true' || lifeEstate === 'false') {
+      where.lifeEstate = lifeEstate === 'true'
+    }
+
+    if (listed === 'true') where.listed = true
+    if (listed === 'false') where.listed = false
+    if (listed === 'unknown') where.listed = null
+
+    if (parcelIds) {
+      const ids = parcelIds
+        .split(',')
+        .map((id) => id.trim())
+        .filter(Boolean)
+        .slice(0, 200)
+      where.parcelId = { in: ids }
+    }
+
     // Build owner conditions
     const ownerConditions: any = {}
-    if (outOfState === 'true') {
-      ownerConditions.outOfStateOwner = true
+    if (outOfState === 'true' || outOfState === 'false') {
+      ownerConditions.outOfStateOwner = outOfState === 'true'
     }
     if (ownerType) {
       ownerConditions.ownerType = ownerType
@@ -76,6 +105,9 @@ export async function GET(request: NextRequest) {
     if (includeCurrentUse === 'false') {
       constraintsConditions.currentUse = false
     }
+    if (includeCurrentUse === 'true') {
+      constraintsConditions.currentUse = true
+    }
     if (Object.keys(constraintsConditions).length > 0) {
       where.constraints = constraintsConditions
     }
@@ -97,6 +129,12 @@ export async function GET(request: NextRequest) {
     }
 
     const sortField = getSortField(sortBy)
+    const orderBy =
+      sortBy === 'price-asc'
+        ? { totalAssessedValue: { sort: 'asc' as const, nulls: 'last' as const } }
+        : sortBy === 'price-desc'
+          ? { totalAssessedValue: { sort: 'desc' as const, nulls: 'last' as const } }
+          : { scores: { [sortField]: 'desc' as const } }
 
     const [properties, total] = await Promise.all([
       prisma.parcel.findMany({
@@ -107,11 +145,7 @@ export async function GET(request: NextRequest) {
           constraints: true,
           scores: true
         },
-        orderBy: {
-          scores: {
-            [sortField]: 'desc'
-          }
-        },
+        orderBy,
         take: limit,
         skip: offset
       }),

@@ -39,6 +39,10 @@ export function calculateSaleLikelihoodScore(
     score += 5
   }
 
+  if (parcel.lifeEstate) {
+    score += 25
+  }
+
   return Math.min(score, 100)
 }
 
@@ -154,6 +158,10 @@ export function calculateDevelopmentScore(
     }
     if (constraints.steepSlope) {
       score -= 10
+    }
+    // Leaving Current Use triggers a land-use change tax, so development costs more.
+    if (constraints.currentUse) {
+      score -= 40
     }
   }
 

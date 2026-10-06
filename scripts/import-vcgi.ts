@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { PrismaClient } from '@prisma/client'
+import { isLifeEstateName, interestIsLifeEstate } from '../lib/life-estate'
 import { importProperties, type ImportedProperty } from './import-data'
 
 const prisma = new PrismaClient()
@@ -210,6 +211,7 @@ async function queryCount(where: string): Promise<number> {
 interface LatestTransfer {
   closeMs: number
   price?: number
+  lifeEstate: boolean
 }
 
 function normalizeSpan(value: string): string {
@@ -223,7 +225,7 @@ function selectedTowns(options: VcgiImportOptions): string[] {
 }
 
 /** Latest deed per SPAN from the statewide property-transfer layer (January 2019 onward). */
-async function fetchLatestTransfers(
+export async function fetchLatestTransfers(
   towns: string[]
 ): Promise<Map<string, LatestTransfer>> {
   const latest = new Map<string, LatestTransfer>()
@@ -239,7 +241,7 @@ async function fetchLatestTransfers(
     const response = await axios.get(`${TRANSFER_SERVER_URL}/query`, {
       params: {
         where,
-        outFields: 'span,closeDate,RlPrVlPdTr,ValPdOrTrn',
+        outFields: 'span,closeDate,RlPrVlPdTr,ValPdOrTrn,intPrpType,intPrTypOt',
         returnGeometry: false,
         resultOffset: offset,
         resultRecordCount: pageSize,
@@ -267,9 +269,13 @@ async function fetchLatestTransfers(
       const realPrice = Number(attributes.RlPrVlPdTr)
       const paidPrice = Number(attributes.ValPdOrTrn)
       const price = realPrice > 0 ? realPrice : paidPrice > 0 ? paidPrice : undefined
+      const lifeEstate = interestIsLifeEstate(
+        attributes.intPrpType,
+        attributes.intPrTypOt
+      )
       const existing = latest.get(span)
       if (!existing || closeMs > existing.closeMs) {
-        latest.set(span, { closeMs, price })
+        latest.set(span, { closeMs, price, lifeEstate })
       }
     }
 
@@ -357,6 +363,7 @@ function mapFeature(
     lastSaleDate,
     lastSalePrice,
     transferType,
+    lifeEstate: isLifeEstateName(ownerName) || Boolean(transfer?.lifeEstate),
   }
 }
 

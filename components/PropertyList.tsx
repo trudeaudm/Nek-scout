@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import {
   ChevronLeft,
   ChevronRight,
+  CircleDollarSign,
   Hammer,
   Home,
   LandPlot,
@@ -23,25 +24,39 @@ import {
 
 interface PropertyListProps {
   searchParams: any
+  mode?: 'search' | 'saved'
+  savedIds?: string[]
 }
 
-export function PropertyList({ searchParams }: PropertyListProps) {
+export function PropertyList({
+  searchParams,
+  mode = 'search',
+  savedIds = [],
+}: PropertyListProps) {
   const [properties, setProperties] = useState<any[]>([])
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [total, setTotal] = useState(0)
   const [offset, setOffset] = useState(0)
   const [sortBy, setSortBy] = useState('overall')
   const limit = 20
+  const savedKey = savedIds.join(',')
 
   useEffect(() => {
-    fetchProperties()
-  }, [searchParams, sortBy])
+    if (mode === 'saved' && savedIds.length === 0) {
+      setProperties([])
+      setTotal(0)
+      setOffset(0)
+      setLoading(false)
+      return
+    }
+    fetchProperties(0)
+  }, [searchParams, sortBy, mode, savedKey])
 
   const fetchProperties = async (newOffset = 0) => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
-        ...searchParams,
+        ...(mode === 'saved' ? { parcelIds: savedIds.join(',') } : searchParams),
         limit: limit.toString(),
         offset: newOffset.toString(),
         sortBy: sortBy
@@ -81,10 +96,12 @@ export function PropertyList({ searchParams }: PropertyListProps) {
       <div className="rounded-xl border border-[#d7e0d4] bg-[#fbfcfa] px-8 py-14 text-center">
         <Search className="mx-auto size-6 text-[#3e6b54]" strokeWidth={1.5} />
         <h3 className="font-display mt-4 text-2xl text-[#1c3330]">
-          No properties found
+          {mode === 'saved' ? 'No saved properties' : 'No properties found'}
         </h3>
         <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-[#5c6b63]">
-          Widen the search. A county or a minimum acreage is usually enough to start.
+          {mode === 'saved'
+            ? 'Save a parcel from the browse list. The list stays in this browser.'
+            : 'Widen the search. A county or a minimum acreage is usually enough to start.'}
         </p>
       </div>
     )
@@ -96,7 +113,9 @@ export function PropertyList({ searchParams }: PropertyListProps) {
       sale: 'Sale Likelihood',
       development: 'Development Potential',
       rental: 'Rental Potential',
-      flip: 'Flip Potential'
+      flip: 'Flip Potential',
+      'price-asc': 'Appraisal, low to high',
+      'price-desc': 'Appraisal, high to low',
     }
     return labels[sortBy] || 'Overall Opportunity'
   }
@@ -156,6 +175,18 @@ export function PropertyList({ searchParams }: PropertyListProps) {
                 <span className="inline-flex items-center gap-2">
                   <Hammer className="size-3.5" strokeWidth={1.75} />
                   Flip potential
+                </span>
+              </SelectItem>
+              <SelectItem value="price-asc">
+                <span className="inline-flex items-center gap-2">
+                  <CircleDollarSign className="size-3.5" strokeWidth={1.75} />
+                  Appraisal, low to high
+                </span>
+              </SelectItem>
+              <SelectItem value="price-desc">
+                <span className="inline-flex items-center gap-2">
+                  <CircleDollarSign className="size-3.5" strokeWidth={1.75} />
+                  Appraisal, high to low
                 </span>
               </SelectItem>
             </SelectContent>
