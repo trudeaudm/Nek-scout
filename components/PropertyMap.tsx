@@ -20,7 +20,7 @@ const SATELLITE_LABELS =
   'https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}'
 const STREETS = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
 
-type Ring = LatLngExpression[]
+type Ring = [number, number][]
 
 function FitParcel({ bounds }: { bounds: LatLngBoundsExpression }) {
   const map = useMap()
@@ -37,7 +37,7 @@ function toRings(raw: number[][][] | undefined): Ring[] {
   if (!raw) return []
   return raw
     .filter((ring) => ring.length > 2)
-    .map((ring) => ring.map(([lng, lat]) => [lat, lng] as LatLngExpression))
+    .map((ring) => ring.map(([lng, lat]) => [lat, lng] as [number, number]))
 }
 
 async function fetchParcelRings(parcelId: string): Promise<Ring[]> {
@@ -92,8 +92,23 @@ export function PropertyMap({
   }, [parcelId])
 
   const bounds = useMemo((): LatLngBoundsExpression => {
-    const outer = rings[0]
-    if (outer && outer.length > 2) return outer
+    const points = rings.flat()
+    if (points.length > 2) {
+      let minLat = points[0][0]
+      let maxLat = points[0][0]
+      let minLng = points[0][1]
+      let maxLng = points[0][1]
+      for (const [lat, lng] of points) {
+        minLat = Math.min(minLat, lat)
+        maxLat = Math.max(maxLat, lat)
+        minLng = Math.min(minLng, lng)
+        maxLng = Math.max(maxLng, lng)
+      }
+      return [
+        [minLat, minLng],
+        [maxLat, maxLng],
+      ]
+    }
     const pad = 0.004
     return [
       [latitude - pad, longitude - pad],
