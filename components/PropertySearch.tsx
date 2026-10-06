@@ -62,14 +62,16 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
         <CardTitle className="text-xl font-bold text-slate-900">
           🔍 Search Filters
         </CardTitle>
-        <p className="text-xs text-slate-600 mt-1">
-          Refine your search criteria
+        <p className="text-sm text-slate-600 mt-2 leading-relaxed">
+          Use these filters to find properties that match your investment criteria. 
+          All filters are optional - start broad and refine as needed.
         </p>
       </CardHeader>
       <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-2">County</label>
+            <label className="block text-sm font-semibold mb-1 text-slate-700">Location</label>
+            <p className="text-xs text-slate-500 mb-2">Choose a county in the Northeast Kingdom</p>
             <Select
               value={filters.county || undefined}
               onValueChange={(value) =>
@@ -115,9 +117,10 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">
+            <label className="block text-sm font-semibold mb-1 text-slate-700">
               Out-of-State Owner
             </label>
+            <p className="text-xs text-slate-500 mb-2">Owners with mailing addresses outside Vermont</p>
             <Select
               value={filters.outOfState || undefined}
               onValueChange={(value) =>
@@ -136,9 +139,10 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">
-              Ownership Tenure (years)
+            <label className="block text-sm font-semibold mb-1 text-slate-700">
+              Ownership Tenure
             </label>
+            <p className="text-xs text-slate-500 mb-2">How long the current owner has held the property</p>
             <Select
               value={filters.ownershipYears || undefined}
               onValueChange={(value) =>
@@ -181,13 +185,18 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
             </Select>
           </div>
 
+          <div className="pt-4 border-t border-slate-200">
+            <p className="text-xs font-semibold text-slate-600 mb-3 uppercase">Investment Strategy</p>
+          </div>
+
           <div>
-            <label className="block text-sm font-medium mb-2">
-              Min Development Score
+            <label className="block text-sm font-semibold mb-1 text-slate-700">
+              Development Score
             </label>
+            <p className="text-xs text-slate-500 mb-2">Land suitable for subdivision or building (0-100)</p>
             <Input
               type="number"
-              placeholder="e.g., 70"
+              placeholder="Min score (e.g., 70)"
               value={filters.minDevelopmentScore}
               onChange={(e) =>
                 setFilters({ ...filters, minDevelopmentScore: e.target.value })
@@ -196,12 +205,13 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-2">
-              Min Rental Score
+            <label className="block text-sm font-semibold mb-1 text-slate-700">
+              Rental Score
             </label>
+            <p className="text-xs text-slate-500 mb-2">Potential as income-producing rental property (0-100)</p>
             <Input
               type="number"
-              placeholder="e.g., 70"
+              placeholder="Min score (e.g., 70)"
               value={filters.minRentalScore}
               onChange={(e) =>
                 setFilters({ ...filters, minRentalScore: e.target.value })

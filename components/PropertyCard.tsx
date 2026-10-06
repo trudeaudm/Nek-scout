@@ -72,7 +72,7 @@ export function PropertyCard({ property }: PropertyCardProps) {
             <p className="text-sm text-slate-500 mt-2">{property.address}</p>
           </div>
           <div className="flex flex-col items-center">
-            <div className="text-xs font-semibold text-slate-500 mb-1">OPPORTUNITY</div>
+            <div className="text-xs font-semibold text-slate-500 mb-1">OPPORTUNITY SCORE</div>
             <Badge
               className={`text-3xl font-bold px-6 py-3 ${getScoreBadgeColor(
                 property.scores?.overallOpportunityScore || 0
@@ -80,17 +80,22 @@ export function PropertyCard({ property }: PropertyCardProps) {
             >
               {property.scores?.overallOpportunityScore || 0}
             </Badge>
-            <div className="text-xs text-slate-500 mt-1">out of 100</div>
+            <div className="text-xs text-slate-500 mt-1 text-center max-w-[120px]">
+              Combined rating of sale likelihood & investment potential
+            </div>
           </div>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-5">
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-          <div className="flex items-center gap-2 mb-3">
+          <div className="mb-3">
             <div className="font-bold text-blue-900 text-sm uppercase tracking-wide">
-              Investment Signals
+              Why This Property May Be Available
             </div>
+            <p className="text-xs text-blue-700 mt-1">
+              Public records showing factors that often indicate seller receptivity
+            </p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -244,37 +249,56 @@ export function PropertyCard({ property }: PropertyCardProps) {
             </div>
 
             <div className="pt-3 border-t">
-              <div className="font-medium mb-2">Investment Scores:</div>
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span>Sale Likelihood:</span>
-                  <span className="font-medium">
-                    {property.scores?.saleLikelihoodScore || 0}/100
-                  </span>
+              <div className="font-bold text-slate-800 mb-3">Detailed Scoring Breakdown</div>
+              <div className="space-y-3">
+                <div>
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-slate-700">Sale Likelihood</span>
+                    <span className="text-lg font-bold text-blue-600">
+                      {property.scores?.saleLikelihoodScore || 0}/100
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">Based on tenure, ownership type, and location signals</p>
                 </div>
-                <div className="flex justify-between">
-                  <span>Development Potential:</span>
-                  <span className="font-medium">
-                    {property.scores?.developmentScore || 0}/100
-                  </span>
+                
+                <div className="pt-2 border-t border-slate-100">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-slate-700">Development Potential</span>
+                    <span className="text-lg font-bold text-green-600">
+                      {property.scores?.developmentScore || 0}/100
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">Acreage, constraints, and subdivision possibilities</p>
                 </div>
-                <div className="flex justify-between">
-                  <span>Rental Potential:</span>
-                  <span className="font-medium">
-                    {property.scores?.rentalScore || 0}/100
-                  </span>
+                
+                <div className="pt-2 border-t border-slate-100">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-slate-700">Rental Potential</span>
+                    <span className="text-lg font-bold text-purple-600">
+                      {property.scores?.rentalScore || 0}/100
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">Property type, location, and income potential</p>
                 </div>
-                <div className="flex justify-between">
-                  <span>Flip Potential:</span>
-                  <span className="font-medium">
-                    {property.scores?.flipScore || 0}/100
-                  </span>
+                
+                <div className="pt-2 border-t border-slate-100">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-slate-700">Flip Potential</span>
+                    <span className="text-lg font-bold text-orange-600">
+                      {property.scores?.flipScore || 0}/100
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">Building condition, location, and value-add opportunity</p>
                 </div>
-                <div className="flex justify-between">
-                  <span>Legal Complexity:</span>
-                  <span className="font-medium">
-                    {property.scores?.legalComplexityScore || 0}/100
-                  </span>
+                
+                <div className="pt-2 border-t border-slate-100">
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-slate-700">Legal Complexity</span>
+                    <span className="text-lg font-bold text-amber-600">
+                      {property.scores?.legalComplexityScore || 0}/100
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">Title, ownership structure, and regulatory considerations</p>
                 </div>
               </div>
             </div>
