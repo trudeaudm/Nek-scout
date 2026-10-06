@@ -26,64 +26,57 @@ export async function GET(request: NextRequest) {
     }
 
     if (town) {
-      where.town = { contains: town, mode: 'insensitive' }
+      where.town = { contains: town }
     }
 
     if (minAcres) {
       where.acreage = { gte: parseFloat(minAcres) }
     }
 
+    // Build owner conditions
+    const ownerConditions: any = {}
     if (outOfState === 'true') {
-      where.owner = {
-        outOfStateOwner: true
-      }
+      ownerConditions.outOfStateOwner = true
+    }
+    if (ownerType) {
+      ownerConditions.ownerType = ownerType
+    }
+    if (Object.keys(ownerConditions).length > 0) {
+      where.owner = ownerConditions
     }
 
+    // Build transfer conditions
     if (ownershipYears) {
       where.transfer = {
         ownershipYears: { gte: parseInt(ownershipYears) }
       }
     }
 
-    if (ownerType) {
-      where.owner = {
-        ...where.owner,
-        ownerType: ownerType
-      }
-    }
-
+    // Build scores conditions
+    const scoresConditions: any = {}
     if (minDevelopmentScore) {
-      where.scores = {
-        developmentScore: { gte: parseInt(minDevelopmentScore) }
-      }
+      scoresConditions.developmentScore = { gte: parseInt(minDevelopmentScore) }
     }
-
     if (minRentalScore) {
-      where.scores = {
-        ...where.scores,
-        rentalScore: { gte: parseInt(minRentalScore) }
-      }
+      scoresConditions.rentalScore = { gte: parseInt(minRentalScore) }
+    }
+    if (Object.keys(scoresConditions).length > 0) {
+      where.scores = scoresConditions
     }
 
+    // Build constraints conditions
+    const constraintsConditions: any = {}
     if (excludeFloodplain === 'true') {
-      where.constraints = {
-        ...where.constraints,
-        floodplain: false
-      }
+      constraintsConditions.floodplain = false
     }
-
     if (excludeWetlands === 'true') {
-      where.constraints = {
-        ...where.constraints,
-        wetlands: false
-      }
+      constraintsConditions.wetlands = false
     }
-
     if (includeCurrentUse === 'false') {
-      where.constraints = {
-        ...where.constraints,
-        currentUse: false
-      }
+      constraintsConditions.currentUse = false
+    }
+    if (Object.keys(constraintsConditions).length > 0) {
+      where.constraints = constraintsConditions
     }
 
     const [properties, total] = await Promise.all([
