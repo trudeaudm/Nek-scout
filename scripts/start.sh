@@ -2,7 +2,14 @@
 set -e
 
 echo "Running database migrations..."
-npx prisma migrate deploy
+# The production database was created before migrations existed, so the init
+# migration's CREATE TABLE statements fail when the tables are already there.
+if ! npx prisma migrate deploy; then
+  echo "migrate deploy failed. Baselining the existing schema..."
+  npx prisma migrate resolve --rolled-back 20261006171500_init >/dev/null 2>&1 || true
+  npx prisma migrate resolve --applied 20261006171500_init
+  npx prisma db push --skip-generate
+fi
 
 echo "Starting application..."
 # Kick off an initial VCGI import in the background when the DB is empty.

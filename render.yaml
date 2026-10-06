@@ -23,20 +23,6 @@ services:
         value: "5"
     autoDeploy: true
 
-  # Automated data updates (daily at 2am UTC)
-  # Note: Render Cron Jobs require a paid instance type (not available on free).
-  - type: cron
-    name: nek-scout-updater
-    runtime: node
-    schedule: "0 2 * * *"
-    buildCommand: npm install && npx prisma generate
-    startCommand: npm run auto-update
-    envVars:
-      - key: NODE_ENV
-        value: production
-      - key: FORCE_UPDATE
-        value: "true"
-      - key: DATABASE_URL
-        fromDatabase:
-          name: nek-scout-db
-          property: connectionString
+# Daily VCGI refresh (nek-scout-updater, "0 2 * * *", startCommand: npm run auto-update)
+# is intentionally not declared. Render cron jobs require a paid plan (0.5c-512mb).
+# Including one on a free workspace fails Blueprint sync and blocks this web service.
