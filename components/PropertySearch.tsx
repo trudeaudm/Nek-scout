@@ -57,11 +57,16 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Search Filters</CardTitle>
+    <Card className="shadow-lg border-2 border-slate-200">
+      <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b-2 border-slate-200">
+        <CardTitle className="text-xl font-bold text-slate-900">
+          🔍 Search Filters
+        </CardTitle>
+        <p className="text-xs text-slate-600 mt-1">
+          Refine your search criteria
+        </p>
       </CardHeader>
-      <CardContent>
+      <CardContent className="pt-6">
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2">County</label>
@@ -244,17 +249,20 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
             </Select>
           </div>
 
-          <div className="flex gap-2 pt-4">
-            <Button type="submit" className="flex-1">
-              Search
+          <div className="flex gap-2 pt-6 border-t-2 border-slate-200">
+            <Button 
+              type="submit" 
+              className="flex-1 bg-blue-600 hover:bg-blue-700 font-bold text-base py-6"
+            >
+              🔍 Search Properties
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={handleReset}
-              className="flex-1"
+              className="flex-1 font-semibold border-2"
             >
-              Reset
+              ↺ Reset
             </Button>
           </div>
         </form>

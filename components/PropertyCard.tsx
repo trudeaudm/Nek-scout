@@ -57,104 +57,150 @@ export function PropertyCard({ property }: PropertyCardProps) {
   const bestStrategy = getBestStrategy()
 
   return (
-    <Card className="hover:shadow-lg transition-shadow">
-      <CardHeader>
-        <div className="flex justify-between items-start">
+    <Card className="hover:shadow-xl transition-all hover:border-blue-200 border-2">
+      <CardHeader className="bg-gradient-to-r from-slate-50 to-white pb-6">
+        <div className="flex justify-between items-start gap-4">
           <div className="flex-1">
-            <CardTitle className="text-xl">
-              {property.town}, VT — {property.acreage?.toFixed(1) || '?'} acres
+            <CardTitle className="text-2xl font-bold text-slate-900 mb-2">
+              {property.town}, VT
             </CardTitle>
-            <p className="text-sm text-slate-600 mt-1">{property.address}</p>
+            <div className="flex items-center gap-3 text-lg font-semibold text-slate-700">
+              <span className="text-blue-600">{property.acreage?.toFixed(1) || '?'} acres</span>
+              <span className="text-slate-400">•</span>
+              <span className="text-slate-600">{property.county} County</span>
+            </div>
+            <p className="text-sm text-slate-500 mt-2">{property.address}</p>
           </div>
-          <Badge
-            className={`text-lg font-bold ${getScoreBadgeColor(
-              property.scores?.overallOpportunityScore || 0
-            )}`}
-          >
-            {property.scores?.overallOpportunityScore || 0}
-          </Badge>
+          <div className="flex flex-col items-center">
+            <div className="text-xs font-semibold text-slate-500 mb-1">OPPORTUNITY</div>
+            <Badge
+              className={`text-3xl font-bold px-6 py-3 ${getScoreBadgeColor(
+                property.scores?.overallOpportunityScore || 0
+              )}`}
+            >
+              {property.scores?.overallOpportunityScore || 0}
+            </Badge>
+            <div className="text-xs text-slate-500 mt-1">out of 100</div>
+          </div>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div>
-            <span className="font-medium">Owner Mailing State:</span>{' '}
-            {property.owner?.mailingState || 'VT'}
+      <CardContent className="space-y-5">
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="font-bold text-blue-900 text-sm uppercase tracking-wide">
+              Investment Signals
+            </div>
           </div>
-          <div>
-            <span className="font-medium">Ownership Tenure:</span>{' '}
-            {property.transfer?.ownershipYears
-              ? `~${property.transfer.ownershipYears} years`
-              : 'Unknown'}
-          </div>
-          <div>
-            <span className="font-medium">Owner Type:</span>{' '}
-            {property.owner?.ownerType || 'Unknown'}
-          </div>
-          <div>
-            <span className="font-medium">Best Strategy:</span>{' '}
-            {bestStrategy.name} ({bestStrategy.score}/100)
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <div className="text-xs text-blue-700 font-semibold mb-1">OWNERSHIP TENURE</div>
+              <div className="text-lg font-bold text-blue-900">
+                {property.transfer?.ownershipYears
+                  ? `${property.transfer.ownershipYears} years`
+                  : 'Unknown'}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-blue-700 font-semibold mb-1">OWNER LOCATION</div>
+              <div className="text-lg font-bold text-blue-900">
+                {property.owner?.mailingState || 'VT'}
+                {property.owner?.outOfStateOwner && (
+                  <span className="ml-2 text-sm text-orange-600">• Out of State</span>
+                )}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-blue-700 font-semibold mb-1">OWNER TYPE</div>
+              <div className="text-lg font-bold text-blue-900">
+                {property.owner?.ownerType || 'Unknown'}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-blue-700 font-semibold mb-1">BEST STRATEGY</div>
+              <div className="text-lg font-bold text-blue-900">
+                {bestStrategy.name}
+              </div>
+              <div className="text-sm text-blue-700">
+                Score: {bestStrategy.score}/100
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="pt-2 border-t">
-          <div className="text-sm font-medium mb-2">Key Factors:</div>
+        <div className="pt-2">
+          <div className="text-xs font-bold text-slate-700 mb-3 uppercase tracking-wide">
+            Why This Property Ranks High
+          </div>
           <div className="flex flex-wrap gap-2">
             {property.acreage && property.acreage >= 10 && (
-              <Badge variant="outline">Large acreage</Badge>
+              <Badge className="bg-green-100 text-green-800 border-green-300 font-semibold">
+                ✓ Large Acreage
+              </Badge>
             )}
             {property.owner?.absenteeOwner && (
-              <Badge variant="outline">Absentee ownership</Badge>
+              <Badge className="bg-orange-100 text-orange-800 border-orange-300 font-semibold">
+                ✓ Absentee Owner
+              </Badge>
             )}
             {property.transfer?.ownershipYears &&
               property.transfer.ownershipYears >= 20 && (
-                <Badge variant="outline">Long tenure</Badge>
+                <Badge className="bg-purple-100 text-purple-800 border-purple-300 font-semibold">
+                  ✓ Long Tenure ({property.transfer.ownershipYears}+ years)
+                </Badge>
               )}
             {property.owner?.ownerType === 'estate' && (
-              <Badge variant="outline">Estate</Badge>
+              <Badge className="bg-red-100 text-red-800 border-red-300 font-semibold">
+                ✓ Estate Ownership
+              </Badge>
             )}
             {property.owner?.ownerType === 'trust' && (
-              <Badge variant="outline">Trust</Badge>
+              <Badge className="bg-blue-100 text-blue-800 border-blue-300 font-semibold">
+                ✓ Trust Ownership
+              </Badge>
             )}
           </div>
         </div>
 
-        {property.constraints && (
-          <div className="pt-2 border-t">
-            <div className="text-sm font-medium mb-2">Considerations:</div>
+        {property.constraints && (property.constraints.currentUse || property.constraints.floodplain || 
+          property.constraints.wetlands || property.constraints.conservedLand) && (
+          <div className="pt-2 border-t border-slate-200">
+            <div className="text-xs font-bold text-amber-700 mb-3 uppercase tracking-wide">
+              ⚠ Due Diligence Required
+            </div>
             <div className="flex flex-wrap gap-2">
               {property.constraints.currentUse && (
-                <Badge variant="outline" className="bg-yellow-50">
-                  Current Use review needed
+                <Badge className="bg-yellow-100 text-yellow-900 border-yellow-300 font-medium">
+                  Current Use Review
                 </Badge>
               )}
               {property.constraints.floodplain && (
-                <Badge variant="outline" className="bg-blue-50">
-                  Floodplain
+                <Badge className="bg-blue-100 text-blue-900 border-blue-300 font-medium">
+                  Floodplain Zone
                 </Badge>
               )}
               {property.constraints.wetlands && (
-                <Badge variant="outline" className="bg-green-50">
-                  Wetlands
+                <Badge className="bg-teal-100 text-teal-900 border-teal-300 font-medium">
+                  Wetlands Present
                 </Badge>
               )}
               {property.constraints.conservedLand && (
-                <Badge variant="outline" className="bg-red-50">
-                  Conserved land
+                <Badge className="bg-red-100 text-red-900 border-red-300 font-medium">
+                  Conservation Restrictions
                 </Badge>
               )}
             </div>
           </div>
         )}
 
-        <div className="flex gap-2 pt-2">
+        <div className="flex gap-3 pt-4 border-t border-slate-200">
           <Button
-            variant="outline"
+            variant={showDetails ? "default" : "outline"}
             size="sm"
             onClick={() => setShowDetails(!showDetails)}
+            className="flex-1 font-semibold"
           >
-            {showDetails ? 'Hide' : 'Show'} Details
+            {showDetails ? '▼ Hide Details' : '▶ Show Full Details'}
           </Button>
           {!explanation && !showDetails && (
             <Button
@@ -162,8 +208,9 @@ export function PropertyCard({ property }: PropertyCardProps) {
               size="sm"
               onClick={fetchExplanation}
               disabled={loadingExplanation}
+              className="flex-1 font-semibold border-blue-300 text-blue-700 hover:bg-blue-50"
             >
-              {loadingExplanation ? 'Loading...' : 'AI Explanation'}
+              {loadingExplanation ? '⏳ Loading...' : '🤖 AI Analysis'}
             </Button>
           )}
         </div>

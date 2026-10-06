@@ -59,12 +59,16 @@ export function PropertyList({ searchParams }: PropertyListProps) {
 
   if (properties.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-        <h3 className="text-xl font-semibold text-slate-900 mb-2">
-          No properties found
+      <div className="bg-gradient-to-br from-slate-50 to-white rounded-lg shadow-lg p-12 text-center border-2 border-slate-200">
+        <div className="text-6xl mb-4">🔍</div>
+        <h3 className="text-2xl font-bold text-slate-900 mb-3">
+          No Properties Found
         </h3>
-        <p className="text-slate-600">
+        <p className="text-slate-600 text-lg mb-4">
           Try adjusting your search filters to see more results.
+        </p>
+        <p className="text-sm text-slate-500">
+          Tip: Start with broader criteria like county or minimum acreage
         </p>
       </div>
     )
@@ -72,10 +76,18 @@ export function PropertyList({ searchParams }: PropertyListProps) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <p className="text-sm text-slate-600">
-          Showing {offset + 1}-{Math.min(offset + limit, total)} of {total} properties
-        </p>
+      <div className="bg-gradient-to-r from-blue-50 to-white rounded-lg shadow-md p-5 border-l-4 border-blue-600">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-2xl font-bold text-blue-900">
+              {total} {total === 1 ? 'Property' : 'Properties'} Found
+            </p>
+            <p className="text-sm text-slate-600 mt-1">
+              Showing {offset + 1}-{Math.min(offset + limit, total)} • Sorted by Opportunity Score
+            </p>
+          </div>
+          <div className="text-4xl">📊</div>
+        </div>
       </div>
 
       <div className="space-y-4">
@@ -85,15 +97,22 @@ export function PropertyList({ searchParams }: PropertyListProps) {
       </div>
 
       {total > limit && (
-        <div className="flex justify-center gap-4">
+        <div className="flex justify-center gap-4 mt-8">
           {offset > 0 && (
-            <Button onClick={handlePrevious} variant="outline">
-              Previous
+            <Button 
+              onClick={handlePrevious} 
+              variant="outline"
+              className="px-8 py-6 font-bold text-base border-2"
+            >
+              ← Previous Page
             </Button>
           )}
           {offset + limit < total && (
-            <Button onClick={handleLoadMore}>
-              Next
+            <Button 
+              onClick={handleLoadMore}
+              className="px-8 py-6 font-bold text-base bg-blue-600 hover:bg-blue-700"
+            >
+              Next Page →
             </Button>
           )}
         </div>

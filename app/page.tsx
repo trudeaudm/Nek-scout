@@ -14,14 +14,17 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-slate-100">
-      <header className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+      <header className="bg-gradient-to-r from-blue-900 to-blue-800 shadow-lg border-b-4 border-blue-600">
+        <div className="container mx-auto px-4 py-8">
+          <h1 className="text-4xl font-bold text-white mb-2">
             Vermont Off-Market Property Finder
           </h1>
-          <p className="text-slate-600 mt-2">
-            Northeast Kingdom Investment Opportunities
+          <p className="text-blue-100 text-lg font-medium">
+            🎯 Northeast Kingdom Investment Opportunities
+          </p>
+          <p className="text-blue-200 text-sm mt-2">
+            Discover high-potential properties with ownership-transition signals
           </p>
         </div>
       </header>
