@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Parcel {
+  id                    String      @id @default(uuid())
+  parcelId              String      @unique
+  town                  String
+  county                String
+  address               String
+  acreage               Float?
+  landValue             Float?
+  buildingValue         Float?
+  totalAssessedValue    Float?
+  yearBuilt             Int?
+  propertyClass         String?
+  zoning                String?
+  latitude              Float?
+  longitude             Float?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  owner                 Owner       @relation(fields: [ownerId], references: [id])
+  ownerId               String
+  transfer              Transfer?
+  constraints           Constraints?
+  scores                Scores?
+
+  @@index([county])
+  @@index([town])
+  @@index([acreage])
+}
+
+model Owner {
+  id                    String      @id @default(uuid())
+  ownerName             String
+  mailingAddress        String
+  mailingState          String?
+  ownerType             String
+  absenteeOwner         Boolean     @default(false)
+  outOfStateOwner       Boolean     @default(false)
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  parcels               Parcel[]
+
+  @@index([mailingState])
+  @@index([ownerType])
+  @@index([absenteeOwner])
+  @@index([outOfStateOwner])
+}
+
+model Transfer {
+  id                    String      @id @default(uuid())
+  parcelId              String      @unique
+  lastSaleDate          DateTime?
+  lastSalePrice         Float?
+  ownershipYears        Int?
+  transferType          String?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  parcel                Parcel      @relation(fields: [parcelId], references: [id])
+}
+
+model Constraints {
+  id                    String      @id @default(uuid())
+  parcelId              String      @unique
+  floodplain            Boolean     @default(false)
+  wetlands              Boolean     @default(false)
+  riverCorridor         Boolean     @default(false)
+  currentUse            Boolean     @default(false)
+  conservedLand         Boolean     @default(false)
+  steepSlope            Boolean     @default(false)
+  accessFrontageFlags   String?
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  
+  parcel                Parcel      @relation(fields: [parcelId], references: [id])
+}
+
+model Scores {
+  id                        String      @id @default(uuid())
+  parcelId                  String      @unique
+  saleLikelihoodScore       Int         @default(0)
+  flipScore                 Int         @default(0)
+  rentalScore               Int         @default(0)
+  developmentScore          Int         @default(0)
+  legalComplexityScore      Int         @default(0)
+  overallOpportunityScore   Int         @default(0)
+  createdAt                 DateTime    @default(now())
+  updatedAt                 DateTime    @updatedAt
+  
+  parcel                    Parcel      @relation(fields: [parcelId], references: [id])
+
+  @@index([overallOpportunityScore])
+  @@index([saleLikelihoodScore])
+  @@index([developmentScore])
+}
