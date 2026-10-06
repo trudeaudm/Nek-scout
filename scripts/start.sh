@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-export DATABASE_URL="file:./prisma/dev.db"
-
 echo "Running database migrations..."
 npx prisma migrate deploy
 
