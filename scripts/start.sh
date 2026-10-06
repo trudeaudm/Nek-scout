@@ -61,6 +61,12 @@ prisma.constraints.count({ where: { spatialChecked: false } })
   .then((c) => { console.log(c); return prisma.\$disconnect(); })
   .catch(async (e) => { console.error(e); await prisma.\$disconnect(); process.exit(1); });
 " 2>/dev/null)
+      echo "Checking public for-sale listings..."
+      npx tsx scripts/import-listings.ts \
+        >> /tmp/nek-scout-boot-import.log 2>&1 \
+        && echo "Listing check finished." \
+        || echo "Listing check failed. Existing listing flags were left as they were."
+
       if [ "${UNCHECKED}" != "0" ]; then
         echo "Background flood, wetland, and life-estate check starting..."
         npx tsx scripts/enrich-constraints.ts \
@@ -68,12 +74,6 @@ prisma.constraints.count({ where: { spatialChecked: false } })
           && echo "Constraint enrichment finished." \
           || echo "Constraint enrichment failed. Check /tmp/nek-scout-boot-import.log"
       fi
-
-      echo "Checking public for-sale listings..."
-      npx tsx scripts/import-listings.ts \
-        >> /tmp/nek-scout-boot-import.log 2>&1 \
-        && echo "Listing check finished." \
-        || echo "Listing check failed. Existing listing flags were left as they were."
     fi
   ) &
 fi

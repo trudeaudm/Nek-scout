@@ -2,23 +2,91 @@ import { PrismaClient } from '@prisma/client'
 import { NEK_TOWNS } from './import-vcgi'
 
 /**
- * Marks parcels that match a current public for-sale ad.
- * Listing sites often refuse unattended requests. When that happens this
- * leaves `listed` unset, so unchecked parcels are not treated as off-market.
+ * Marks parcels that match a current Realtor.com for-sale ad.
+ * A failed lookup leaves existing flags alone.
  */
+
+const GRAPHQL_URL = 'https://www.realtor.com/frontdoor/graphql'
+const SEARCH_QUERY = `
+  query ConsumerSearchQuery($query: HomeSearchCriteria!, $limit: Int, $offset: Int) {
+    home_search(query: $query, limit: $limit, offset: $offset) {
+      total
+      results {
+        list_price
+        permalink
+        location {
+          address {
+            line
+            city
+            coordinate { lat lon }
+          }
+        }
+      }
+    }
+  }
+`
+
+const STREET_SUFFIXES = new Set([
+  'RD', 'ROAD', 'DR', 'DRIVE', 'LN', 'LANE', 'ST', 'STREET', 'AVE', 'AVENUE',
+  'HWY', 'HIGHWAY', 'RTE', 'ROUTE', 'CIR', 'CIRCLE', 'CT', 'COURT', 'PL',
+  'PLACE', 'TER', 'TERRACE', 'PKWY', 'WAY', 'BLVD', 'BOULEVARD', 'TRL',
+  'TRAIL', 'EXT', 'EXTENSION',
+])
 
 const prisma = new PrismaClient()
 
-interface PublicListing {
+export interface PublicListing {
   town: string
+  searchTown: string
   address: string
   price?: number
   url?: string
+  latitude?: number
+  longitude?: number
+}
+
+export interface ParcelPoint {
+  id: string
+  town: string
+  address: string
+  latitude?: number | null
+  longitude?: number | null
+  acreage?: number | null
+}
+
+function townKey(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\./g, '')
+    .replace(/^st /, 'saint ')
+    .trim()
+}
+
+function townsCompatible(parcelTown: string, listing: PublicListing): boolean {
+  const parcel = townKey(parcelTown)
+  const city = townKey(listing.town)
+  const searched = townKey(listing.searchTown)
+  if (parcel === city || parcel === searched) return true
+  if (
+    (parcel === 'saint johnsbury' || parcel === 'st johnsbury') &&
+    (city === 'saint johnsbury' || city === 'st johnsbury' || searched === 'saint johnsbury')
+  ) {
+    return true
+  }
+  if (
+    city === 'newport' &&
+    (parcel === 'newport city' || parcel === 'newport town') &&
+    parcel === searched
+  ) {
+    return true
+  }
+  return false
 }
 
 function normalizeAddress(value: string): string {
   return value
     .toUpperCase()
+    .replace(/&/g, ' AND ')
     .replace(/[^A-Z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
@@ -28,112 +96,231 @@ function streetNumber(value: string): string | undefined {
   return normalizeAddress(value).match(/^(\d+)/)?.[1]
 }
 
-async function fetchTownListings(town: string): Promise<PublicListing[] | null> {
-  const slug = `${town.replace(/\s+/g, '_')}_VT`
-  const response = await fetch(
-    `https://www.realtor.com/realestateandhomes-search/${slug}`,
-    {
-      headers: {
-        Accept: 'text/html',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-      },
-      signal: AbortSignal.timeout(20000),
-    }
-  )
+function streetTokens(value: string): string[] {
+  const number = streetNumber(value)
+  return normalizeAddress(value)
+    .split(' ')
+    .filter((token) => token && token !== number && !STREET_SUFFIXES.has(token) && token !== 'LOT' && token !== 'UNIT' && token !== 'AND')
+}
 
-  if (response.status === 403 || response.status === 429 || response.status === 503) {
-    console.log(`Listing source refused ${town} (${response.status}).`)
-    return null
-  }
-  if (!response.ok) {
-    console.log(`Listing source returned ${response.status} for ${town}.`)
-    return null
-  }
+function addressesMatch(parcelAddress: string, listingAddress: string): boolean {
+  const parcelNumber = streetNumber(parcelAddress)
+  const listingNumber = streetNumber(listingAddress)
+  if (!parcelNumber || !listingNumber || parcelNumber !== listingNumber) return false
+  const parcelTokens = streetTokens(parcelAddress)
+  const listingTokens = streetTokens(listingAddress)
+  if (parcelTokens.length === 0 || listingTokens.length === 0) return false
+  const shorter = parcelTokens.length <= listingTokens.length ? parcelTokens : listingTokens
+  const longer = new Set(parcelTokens.length <= listingTokens.length ? listingTokens : parcelTokens)
+  return shorter.every((token) => longer.has(token))
+}
 
-  const html = await response.text()
-  const marker = html.indexOf('__NEXT_DATA__')
-  if (marker === -1) {
-    console.log(`Listing page for ${town} had no listing payload.`)
-    return null
-  }
+function distanceMeters(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number
+): number {
+  const toRad = (value: number) => (value * Math.PI) / 180
+  const dLat = toRad(lat2 - lat1)
+  const dLon = toRad(lon2 - lon1)
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2
+  return 6371000 * 2 * Math.asin(Math.sqrt(a))
+}
 
-  const start = html.indexOf('>', marker) + 1
-  const end = html.indexOf('</script>', start)
-  let payload: any
-  try {
-    payload = JSON.parse(html.slice(start, end))
-  } catch {
-    console.log(`Listing payload for ${town} could not be read.`)
-    return []
-  }
+function matchRadius(acreage?: number | null): number {
+  if (!acreage || acreage < 10) return 200
+  if (acreage < 40) return 450
+  if (acreage < 100) return 800
+  return 1200
+}
 
-  const homes: any[] =
-    payload?.props?.pageProps?.properties ||
-    payload?.props?.pageProps?.searchResults?.home_search?.results ||
-    []
+export function matchListings(
+  listings: PublicListing[],
+  parcels: ParcelPoint[]
+): Map<string, PublicListing> {
+  const matched = new Map<string, PublicListing>()
+  const claimed = new Set<string>()
 
-  return homes
-    .map((home) => {
-      const location = home.location || home.address || {}
-      const line = location.line || location.street || home.address_line || ''
-      const city = location.city || home.city || town
-      return {
-        town: String(city),
-        address: String(line),
-        price: Number(home.list_price || home.price) || undefined,
-        url: home.permalink
-          ? `https://www.realtor.com/realestateandhomes-detail/${home.permalink}`
-          : undefined,
+  for (const listing of listings) {
+    let chosen: ParcelPoint | undefined
+
+    if (listing.latitude != null && listing.longitude != null) {
+      const nearby = parcels
+        .filter(
+          (parcel) =>
+            parcel.latitude != null &&
+            parcel.longitude != null &&
+            !claimed.has(parcel.id)
+        )
+        .map((parcel) => ({
+          parcel,
+          meters: distanceMeters(
+            listing.latitude as number,
+            listing.longitude as number,
+            parcel.latitude as number,
+            parcel.longitude as number
+          ),
+        }))
+        .filter((item) => item.meters <= matchRadius(item.parcel.acreage))
+        .sort((a, b) => a.meters - b.meters)
+
+      const numbered = nearby.find((item) =>
+        addressesMatch(item.parcel.address, listing.address)
+      )
+      if (numbered) {
+        chosen = numbered.parcel
+      } else if (
+        nearby.length === 1 ||
+        (nearby.length > 1 && nearby[0].meters * 2 < nearby[1].meters)
+      ) {
+        chosen = nearby[0].parcel
       }
+    }
+
+    if (!chosen) {
+      const byAddress = parcels.filter(
+        (parcel) =>
+          !claimed.has(parcel.id) &&
+          townsCompatible(parcel.town, listing) &&
+          addressesMatch(parcel.address, listing.address)
+      )
+      if (byAddress.length === 1) chosen = byAddress[0]
+    }
+
+    if (chosen) {
+      claimed.add(chosen.id)
+      matched.set(chosen.id, listing)
+    }
+  }
+
+  return matched
+}
+
+function searchPhrases(town: string): string[] {
+  const phrases = [`${town}, VT`]
+  if (town === 'Saint Johnsbury') phrases.push('St. Johnsbury, VT')
+  if (town === 'Brighton') phrases.push('Island Pond, VT')
+  return phrases
+}
+
+async function fetchLocation(location: string): Promise<PublicListing[] | null> {
+  const searchTown = location.replace(/, VT$/i, '')
+  const listings: PublicListing[] = []
+  let offset = 0
+  let total = Number.POSITIVE_INFINITY
+
+  while (offset < total && offset < 1000) {
+    const response = await fetch(GRAPHQL_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        'rdc-client-name': 'RDC_WEB',
+        'rdc-client-version': '1.0.0',
+        Origin: 'https://www.realtor.com',
+        Referer: 'https://www.realtor.com/',
+      },
+      body: JSON.stringify({
+        operationName: 'ConsumerSearchQuery',
+        variables: {
+          query: {
+            status: ['for_sale'],
+            search_location: { location },
+          },
+          limit: 200,
+          offset,
+        },
+        query: SEARCH_QUERY,
+      }),
+      signal: AbortSignal.timeout(30000),
     })
-    .filter((listing) => listing.address)
+
+    if (!response.ok) {
+      console.log(`Listing source returned ${response.status} for ${location}.`)
+      return null
+    }
+
+    const json = await response.json()
+    const page = json?.data?.home_search
+    if (!page) {
+      console.log(`Listing source had no results for ${location}.`)
+      return null
+    }
+
+    total = Number(page.total) || 0
+    const rows = page.results || []
+    for (const row of rows) {
+      const address = row?.location?.address
+      if (!address?.line) continue
+      listings.push({
+        town: String(address.city || searchTown),
+        searchTown,
+        address: String(address.line),
+        price: Number(row.list_price) || undefined,
+        url: row.permalink
+          ? `https://www.realtor.com/realestateandhomes-detail/${row.permalink}`
+          : undefined,
+        latitude: address.coordinate?.lat,
+        longitude: address.coordinate?.lon,
+      })
+    }
+
+    if (rows.length === 0) break
+    offset += rows.length
+  }
+
+  return listings
+}
+
+async function fetchAllListings(): Promise<PublicListing[] | null> {
+  const seen = new Set<string>()
+  const listings: PublicListing[] = []
+
+  for (const town of Object.values(NEK_TOWNS).flat()) {
+    for (const phrase of searchPhrases(town)) {
+      const found = await fetchLocation(phrase)
+      if (found === null) return null
+      let added = 0
+      for (const listing of found) {
+        const key = listing.url || `${listing.address}|${listing.latitude}|${listing.longitude}`
+        if (seen.has(key)) continue
+        seen.add(key)
+        listings.push(listing)
+        added++
+      }
+      console.log(`${phrase}: ${found.length} ads, ${added} new`)
+    }
+  }
+
+  return listings
 }
 
 async function main() {
-  const towns = Object.values(NEK_TOWNS).flat()
-  const listings: PublicListing[] = []
-
-  for (const town of towns) {
-    const found = await fetchTownListings(town)
-    if (found === null) {
-      console.log('Stopping. Parcel listing flags were left unchanged.')
-      return
-    }
-    listings.push(...found)
-    console.log(`${town}: ${found.length} public listings`)
+  const listings = await fetchAllListings()
+  if (listings === null) {
+    console.log('Stopping. Parcel listing flags were left unchanged.')
+    return
   }
-
   if (listings.length === 0) {
-    console.log('No readable for-sale homes. Listing flags were left unchanged.')
+    console.log('No for-sale ads were returned. Listing flags were left unchanged.')
     return
   }
 
   const parcels = await prisma.parcel.findMany({
-    select: { id: true, town: true, address: true },
+    select: {
+      id: true,
+      town: true,
+      address: true,
+      latitude: true,
+      longitude: true,
+      acreage: true,
+    },
   })
-
-  const byTown = new Map<string, typeof parcels>()
-  for (const parcel of parcels) {
-    const key = parcel.town.toLowerCase()
-    const group = byTown.get(key) || []
-    group.push(parcel)
-    byTown.set(key, group)
-  }
-
-  const matched = new Map<string, PublicListing>()
-  for (const listing of listings) {
-    const candidates = byTown.get(listing.town.toLowerCase()) || []
-    const number = streetNumber(listing.address)
-    const street = normalizeAddress(listing.address)
-    const hit = candidates.find((parcel) => {
-      const parcelStreet = normalizeAddress(parcel.address)
-      if (number && streetNumber(parcel.address) !== number) return false
-      return parcelStreet.includes(street) || street.includes(parcelStreet)
-    })
-    if (hit) matched.set(hit.id, listing)
-  }
+  const matched = matchListings(listings, parcels)
+  console.log(`Matching ${matched.size} of ${listings.length} ads to ${parcels.length} parcels.`)
 
   await prisma.$transaction(async (tx) => {
     await tx.parcel.updateMany({
@@ -151,14 +338,16 @@ async function main() {
     }
   })
 
-  console.log(`Matched ${matched.size} parcels to a public listing.`)
+  console.log(`Marked ${matched.size} parcels as listed.`)
 }
 
-main()
-  .catch((error) => {
-    console.error('Listing import failed:', error)
-    process.exitCode = 1
-  })
-  .finally(async () => {
-    await prisma.$disconnect()
-  })
+if (require.main === module) {
+  main()
+    .catch((error) => {
+      console.error('Listing import failed:', error)
+      process.exitCode = 1
+    })
+    .finally(async () => {
+      await prisma.$disconnect()
+    })
+}
