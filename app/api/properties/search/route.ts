@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
   const excludeFloodplain = searchParams.get('excludeFloodplain')
   const excludeWetlands = searchParams.get('excludeWetlands')
   const includeCurrentUse = searchParams.get('includeCurrentUse')
+  const sortBy = searchParams.get('sortBy') || 'overall'
   const limit = parseInt(searchParams.get('limit') || '50')
   const offset = parseInt(searchParams.get('offset') || '0')
 
@@ -79,6 +80,24 @@ export async function GET(request: NextRequest) {
       where.constraints = constraintsConditions
     }
 
+    // Determine sort field based on sortBy parameter
+    const getSortField = (sort: string) => {
+      switch (sort) {
+        case 'sale':
+          return 'saleLikelihoodScore'
+        case 'development':
+          return 'developmentScore'
+        case 'rental':
+          return 'rentalScore'
+        case 'flip':
+          return 'flipScore'
+        default:
+          return 'overallOpportunityScore'
+      }
+    }
+
+    const sortField = getSortField(sortBy)
+
     const [properties, total] = await Promise.all([
       prisma.parcel.findMany({
         where,
@@ -90,7 +109,7 @@ export async function GET(request: NextRequest) {
         },
         orderBy: {
           scores: {
-            overallOpportunityScore: 'desc'
+            [sortField]: 'desc'
           }
         },
         take: limit,

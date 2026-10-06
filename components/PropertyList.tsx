@@ -3,6 +3,13 @@
 import { useEffect, useState } from 'react'
 import { PropertyCard } from '@/components/PropertyCard'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface PropertyListProps {
   searchParams: any
@@ -13,11 +20,12 @@ export function PropertyList({ searchParams }: PropertyListProps) {
   const [loading, setLoading] = useState(false)
   const [total, setTotal] = useState(0)
   const [offset, setOffset] = useState(0)
+  const [sortBy, setSortBy] = useState('overall')
   const limit = 20
 
   useEffect(() => {
     fetchProperties()
-  }, [searchParams])
+  }, [searchParams, sortBy])
 
   const fetchProperties = async (newOffset = 0) => {
     setLoading(true)
@@ -25,7 +33,8 @@ export function PropertyList({ searchParams }: PropertyListProps) {
       const params = new URLSearchParams({
         ...searchParams,
         limit: limit.toString(),
-        offset: newOffset.toString()
+        offset: newOffset.toString(),
+        sortBy: sortBy
       })
 
       const response = await fetch(`/api/properties/search?${params}`)
@@ -74,19 +83,61 @@ export function PropertyList({ searchParams }: PropertyListProps) {
     )
   }
 
+  const getSortLabel = () => {
+    const labels: { [key: string]: string } = {
+      overall: 'Overall Opportunity',
+      sale: 'Sale Likelihood',
+      development: 'Development Potential',
+      rental: 'Rental Potential',
+      flip: 'Flip Potential'
+    }
+    return labels[sortBy] || 'Overall Opportunity'
+  }
+
   return (
     <div className="space-y-6">
       <div className="bg-gradient-to-r from-blue-50 to-white rounded-lg shadow-md p-5 border-l-4 border-blue-600">
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-4 mb-4">
+          <div className="flex-1">
             <p className="text-2xl font-bold text-blue-900">
               {total} {total === 1 ? 'Property' : 'Properties'} Found
             </p>
             <p className="text-sm text-slate-600 mt-1">
-              Showing {offset + 1}-{Math.min(offset + limit, total)} • Sorted by Opportunity Score
+              Showing {offset + 1}-{Math.min(offset + limit, total)}
             </p>
           </div>
           <div className="text-4xl">📊</div>
+        </div>
+        
+        <div className="flex items-center gap-3">
+          <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">
+            Sort by:
+          </label>
+          <Select value={sortBy} onValueChange={(value) => {
+            setSortBy(value)
+            setOffset(0)
+          }}>
+            <SelectTrigger className="w-[240px] bg-white font-medium">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="overall">
+                <span className="font-semibold">🎯 Overall Opportunity</span>
+              </SelectItem>
+              <SelectItem value="sale">
+                <span className="font-semibold">📈 Sale Likelihood</span>
+              </SelectItem>
+              <SelectItem value="development">
+                <span className="font-semibold">🏗️ Development Potential</span>
+              </SelectItem>
+              <SelectItem value="rental">
+                <span className="font-semibold">🏠 Rental Potential</span>
+              </SelectItem>
+              <SelectItem value="flip">
+                <span className="font-semibold">🔨 Flip Potential</span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
 
