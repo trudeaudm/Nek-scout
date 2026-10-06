@@ -66,9 +66,9 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
           <div>
             <label className="block text-sm font-medium mb-2">County</label>
             <Select
-              value={filters.county}
+              value={filters.county || undefined}
               onValueChange={(value) =>
-                setFilters({ ...filters, county: value })
+                setFilters({ ...filters, county: value === 'all' ? '' : value })
               }
             >
               <SelectTrigger>
@@ -114,9 +114,9 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
               Out-of-State Owner
             </label>
             <Select
-              value={filters.outOfState}
+              value={filters.outOfState || undefined}
               onValueChange={(value) =>
-                setFilters({ ...filters, outOfState: value })
+                setFilters({ ...filters, outOfState: value === 'all' ? '' : value })
               }
             >
               <SelectTrigger>
@@ -135,9 +135,9 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
               Ownership Tenure (years)
             </label>
             <Select
-              value={filters.ownershipYears}
+              value={filters.ownershipYears || undefined}
               onValueChange={(value) =>
-                setFilters({ ...filters, ownershipYears: value })
+                setFilters({ ...filters, ownershipYears: value === 'all' ? '' : value })
               }
             >
               <SelectTrigger>
@@ -157,9 +157,9 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
               Owner Type
             </label>
             <Select
-              value={filters.ownerType}
+              value={filters.ownerType || undefined}
               onValueChange={(value) =>
-                setFilters({ ...filters, ownerType: value })
+                setFilters({ ...filters, ownerType: value === 'all' ? '' : value })
               }
             >
               <SelectTrigger>
@@ -209,9 +209,9 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
               Exclude Floodplain
             </label>
             <Select
-              value={filters.excludeFloodplain}
+              value={filters.excludeFloodplain || undefined}
               onValueChange={(value) =>
-                setFilters({ ...filters, excludeFloodplain: value })
+                setFilters({ ...filters, excludeFloodplain: value === 'all' ? '' : value })
               }
             >
               <SelectTrigger>
@@ -229,9 +229,9 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
               Exclude Wetlands
             </label>
             <Select
-              value={filters.excludeWetlands}
+              value={filters.excludeWetlands || undefined}
               onValueChange={(value) =>
-                setFilters({ ...filters, excludeWetlands: value })
+                setFilters({ ...filters, excludeWetlands: value === 'all' ? '' : value })
               }
             >
               <SelectTrigger>
