@@ -1,4 +1,5 @@
 services:
+  # Main web application
   - type: web
     name: nek-scout
     runtime: node
@@ -10,3 +11,4 @@ services:
         value: production
       - key: DATABASE_URL
         value: file:./prisma/dev.db
+    autoDeploy: true
