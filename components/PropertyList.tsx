@@ -1,6 +1,16 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Hammer,
+  Home,
+  LandPlot,
+  Search,
+  Target,
+  TrendingUp,
+} from 'lucide-react'
 import { PropertyCard } from '@/components/PropertyCard'
 import { Button } from '@/components/ui/button'
 import {
@@ -40,8 +50,8 @@ export function PropertyList({ searchParams }: PropertyListProps) {
       const response = await fetch(`/api/properties/search?${params}`)
       const data = await response.json()
 
-      setProperties(data.properties)
-      setTotal(data.total)
+      setProperties(data.properties || [])
+      setTotal(data.total || 0)
       setOffset(newOffset)
     } catch (error) {
       console.error('Failed to fetch properties:', error)
@@ -68,16 +78,13 @@ export function PropertyList({ searchParams }: PropertyListProps) {
 
   if (properties.length === 0) {
     return (
-      <div className="bg-gradient-to-br from-slate-50 to-white rounded-lg shadow-lg p-12 text-center border-2 border-slate-200">
-        <div className="text-6xl mb-4">🔍</div>
-        <h3 className="text-2xl font-bold text-slate-900 mb-3">
-          No Properties Found
+      <div className="rounded-xl border border-[#d7e0d4] bg-[#fbfcfa] px-8 py-14 text-center">
+        <Search className="mx-auto size-6 text-[#3e6b54]" strokeWidth={1.5} />
+        <h3 className="font-display mt-4 text-2xl text-[#1c3330]">
+          No properties found
         </h3>
-        <p className="text-slate-600 text-lg mb-4">
-          Try adjusting your search filters to see more results.
-        </p>
-        <p className="text-sm text-slate-500">
-          Tip: Start with broader criteria like county or minimum acreage
+        <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-[#5c6b63]">
+          Widen the search. A county or a minimum acreage is usually enough to start.
         </p>
       </div>
     )
@@ -96,45 +103,60 @@ export function PropertyList({ searchParams }: PropertyListProps) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-gradient-to-r from-blue-50 to-white rounded-lg shadow-md p-5 border-l-4 border-blue-600">
-        <div className="flex items-center justify-between gap-4 mb-4">
-          <div className="flex-1">
-            <p className="text-2xl font-bold text-blue-900">
-              {total} {total === 1 ? 'Property' : 'Properties'} Found
+      <div className="rounded-xl border border-[#d7e0d4] bg-[#fbfcfa] p-5">
+        <div className="mb-4 flex items-center gap-3">
+          <LandPlot className="size-5 text-[#3e6b54]" strokeWidth={1.5} />
+          <div>
+            <p className="font-display text-2xl text-[#1c3330]">
+              {total.toLocaleString()} {total === 1 ? 'property' : 'properties'}
             </p>
-            <p className="text-sm text-slate-600 mt-1">
-              Showing {offset + 1}-{Math.min(offset + limit, total)}
+            <p className="text-sm text-[#5c6b63]">
+              Showing {offset + 1}–{Math.min(offset + limit, total)}
             </p>
           </div>
-          <div className="text-4xl">📊</div>
         </div>
-        
+
         <div className="flex items-center gap-3">
-          <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">
-            Sort by:
+          <label className="text-sm text-[#5c6b63] whitespace-nowrap">
+            Sort
           </label>
           <Select value={sortBy} onValueChange={(value) => {
             setSortBy(value || 'overall')
             setOffset(0)
           }}>
-            <SelectTrigger className="w-[240px] bg-white font-medium">
+            <SelectTrigger className="w-[240px] bg-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="overall">
-                <span className="font-semibold">🎯 Overall Opportunity</span>
+                <span className="inline-flex items-center gap-2">
+                  <Target className="size-3.5" strokeWidth={1.75} />
+                  Overall opportunity
+                </span>
               </SelectItem>
               <SelectItem value="sale">
-                <span className="font-semibold">📈 Sale Likelihood</span>
+                <span className="inline-flex items-center gap-2">
+                  <TrendingUp className="size-3.5" strokeWidth={1.75} />
+                  Sale likelihood
+                </span>
               </SelectItem>
               <SelectItem value="development">
-                <span className="font-semibold">🏗️ Development Potential</span>
+                <span className="inline-flex items-center gap-2">
+                  <LandPlot className="size-3.5" strokeWidth={1.75} />
+                  Development potential
+                </span>
               </SelectItem>
               <SelectItem value="rental">
-                <span className="font-semibold">🏠 Rental Potential</span>
+                <span className="inline-flex items-center gap-2">
+                  <Home className="size-3.5" strokeWidth={1.75} />
+                  Rental potential
+                </span>
               </SelectItem>
               <SelectItem value="flip">
-                <span className="font-semibold">🔨 Flip Potential</span>
+                <span className="inline-flex items-center gap-2">
+                  <Hammer className="size-3.5" strokeWidth={1.75} />
+                  Flip potential
+                </span>
               </SelectItem>
             </SelectContent>
           </Select>
@@ -150,20 +172,22 @@ export function PropertyList({ searchParams }: PropertyListProps) {
       {total > limit && (
         <div className="flex justify-center gap-4 mt-8">
           {offset > 0 && (
-            <Button 
-              onClick={handlePrevious} 
+            <Button
+              onClick={handlePrevious}
               variant="outline"
-              className="px-8 py-6 font-bold text-base border-2"
+              className="h-10 border-[#c9d5c8] px-4 text-[#1c3330]"
             >
-              ← Previous Page
+              <ChevronLeft className="size-4" strokeWidth={1.75} />
+              Previous
             </Button>
           )}
           {offset + limit < total && (
-            <Button 
+            <Button
               onClick={handleLoadMore}
-              className="px-8 py-6 font-bold text-base bg-blue-600 hover:bg-blue-700"
+              className="h-10 bg-[#1c3330] px-4 text-white hover:bg-[#2a4a42]"
             >
-              Next Page →
+              Next
+              <ChevronRight className="size-4" strokeWidth={1.75} />
             </Button>
           )}
         </div>

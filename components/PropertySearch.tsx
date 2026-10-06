@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { RotateCcw, Search, SlidersHorizontal } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -57,14 +58,14 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
   }
 
   return (
-    <Card className="shadow-lg border-2 border-slate-200">
-      <CardHeader className="bg-gradient-to-r from-slate-50 to-white border-b-2 border-slate-200">
-        <CardTitle className="text-xl font-bold text-slate-900">
-          🔍 Search Filters
+    <Card className="border border-[#d7e0d4] bg-[#fbfcfa] shadow-sm">
+      <CardHeader className="border-b border-[#e4ebe3]">
+        <CardTitle className="flex items-center gap-2 text-lg font-medium text-[#1c3330]">
+          <SlidersHorizontal className="size-4 text-[#3e6b54]" strokeWidth={1.75} />
+          Filters
         </CardTitle>
-        <p className="text-sm text-slate-600 mt-2 leading-relaxed">
-          Use these filters to find properties that match your investment criteria. 
-          All filters are optional - start broad and refine as needed.
+        <p className="mt-2 text-sm leading-relaxed text-[#5c6b63]">
+          Every filter is optional. Start with a place or a size, then refine.
         </p>
       </CardHeader>
       <CardContent className="pt-6">
@@ -185,8 +186,8 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
             </Select>
           </div>
 
-          <div className="pt-4 border-t border-slate-200">
-            <p className="text-xs font-semibold text-slate-600 mb-3 uppercase">Investment Strategy</p>
+          <div className="border-t border-[#e4ebe3] pt-4">
+            <p className="text-xs font-medium tracking-wide text-[#5c6b63] uppercase">Investment strategy</p>
           </div>
 
           <div>
@@ -259,20 +260,22 @@ export function PropertySearch({ onSearch }: PropertySearchProps) {
             </Select>
           </div>
 
-          <div className="flex gap-2 pt-6 border-t-2 border-slate-200">
-            <Button 
-              type="submit" 
-              className="flex-1 bg-blue-600 hover:bg-blue-700 font-bold text-base py-6"
+          <div className="flex gap-2 border-t border-[#e4ebe3] pt-6">
+            <Button
+              type="submit"
+              className="h-10 flex-1 bg-[#1c3330] font-medium text-white hover:bg-[#2a4a42]"
             >
-              🔍 Search Properties
+              <Search className="size-4" strokeWidth={1.75} />
+              Search
             </Button>
             <Button
               type="button"
               variant="outline"
               onClick={handleReset}
-              className="flex-1 font-semibold border-2"
+              className="h-10 flex-1 border-[#c9d5c8] font-medium text-[#1c3330]"
             >
-              ↺ Reset
+              <RotateCcw className="size-4" strokeWidth={1.75} />
+              Reset
             </Button>
           </div>
         </form>
