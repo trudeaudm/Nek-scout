@@ -114,7 +114,7 @@ export function PropertyList({ searchParams }: PropertyListProps) {
             Sort by:
           </label>
           <Select value={sortBy} onValueChange={(value) => {
-            setSortBy(value)
+            setSortBy(value || 'overall')
             setOffset(0)
           }}>
             <SelectTrigger className="w-[240px] bg-white font-medium">
