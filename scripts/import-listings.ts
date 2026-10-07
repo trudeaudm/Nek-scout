@@ -322,21 +322,24 @@ async function main() {
   const matched = matchListings(listings, parcels)
   console.log(`Matching ${matched.size} of ${listings.length} ads to ${parcels.length} parcels.`)
 
-  await prisma.$transaction(async (tx) => {
-    await tx.parcel.updateMany({
-      data: { listed: false, listingUrl: null, listingPrice: null },
-    })
-    for (const [id, listing] of matched) {
-      await tx.parcel.update({
-        where: { id },
-        data: {
-          listed: true,
-          listingUrl: listing.url,
-          listingPrice: listing.price,
-        },
+  await prisma.$transaction(
+    async (tx) => {
+      await tx.parcel.updateMany({
+        data: { listed: false, listingUrl: null, listingPrice: null },
       })
-    }
-  })
+      for (const [id, listing] of matched) {
+        await tx.parcel.update({
+          where: { id },
+          data: {
+            listed: true,
+            listingUrl: listing.url,
+            listingPrice: listing.price,
+          },
+        })
+      }
+    },
+    { timeout: 180000 }
+  )
 
   console.log(`Marked ${matched.size} parcels as listed.`)
 }
